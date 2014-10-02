@@ -445,7 +445,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 		args[0] = CStringGetTextDatum(symbol);
 		ret = SPI_execute_plan(SDF1_1, args, nulls, true, 0);
-		if (ret == SPI_OK_SELECT) {
+		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;
 			tuple = tuptable->vals[0];
@@ -485,6 +485,44 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 			values[i_ex_name] = SPI_getvalue(tuple, tupdesc, 33);
 			values[i_ex_num_symb] = SPI_getvalue(tuple, tupdesc, 34);
 			values[i_ex_open] = SPI_getvalue(tuple, tupdesc, 35);
+		} else if (SPI_processed == 0) {
+			/* It means that no security is match if SPI_processed is Zero,
+			   thus we finish this query if and only if.
+			   If not Zero, all queries as following will success. */
+
+			int iter;
+
+			for (iter = i_x52_wk_high; iter <= i_yield; iter++) {
+				if (	iter == i_cp_co_name	||
+					iter == i_cp_in_name	||
+					iter == i_fin_len	||
+					iter == i_fin		||
+					iter == i_day_len	||
+					iter == i_day		||
+					iter == i_news_len	||
+					iter == i_news		)
+					continue;
+				values[iter] = NULL;
+			}
+
+			tupdesc = SPI_tuptable->tupdesc;
+			/* for SDF1.2 */
+			strcpy(values[i_cp_co_name], "{}");
+			strcpy(values[i_cp_in_name], "{}");
+
+			/* for SDF1.3 */
+			sprintf(values[i_fin_len], "0"); /* Of course! :-) */
+			strcpy(values[i_fin], "{}");
+
+			/* for SDF1.4 */
+			sprintf(values[i_day_len], "0");
+			strcpy(values[i_day], "{}");
+
+			/* for SDF1.6 and SDF1.7 */
+			sprintf(values[i_news_len], "0");
+			strcpy(values[i_news], "{}");
+
+			goto zero_finish;
 		} else {
 			dump_sdf1_inputs(access_lob_flag, max_rows_to_return, buf, symbol);
 			FAIL_FRAME_SET(&funcctx->max_calls, SDF1_statements[0].sql);
@@ -691,6 +729,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		}
 		strcat(values[i_news], "}");
 
+zero_finish:
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) !=
 				TYPEFUNC_COMPOSITE) {
