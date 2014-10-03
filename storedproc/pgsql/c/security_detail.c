@@ -166,6 +166,8 @@
 #define SDF1_6 SDF1_statements[5].plan
 #define SDF1_7 SDF1_statements[6].plan
 
+static MemoryContext SDF1_savedcxt = NULL;
+
 static cached_statement SDF1_statements[] = {
 
 	/* SDF1_1 */
@@ -361,7 +363,6 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
 		bool SDF11_not_match = false;
 
 		bool access_lob_flag = PG_GETARG_BOOL(0);
@@ -436,7 +437,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		SDF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(SDF1_statements);
@@ -686,10 +687,10 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		}
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-		args[0] = Int64GetDatum(atoll(co_id));
-		args[1] = Int16GetDatum(MAX_NEWS_LEN);
-
 		if (!SDF11_not_match) {
+			args[0] = Int64GetDatum(atoll(co_id));
+			args[1] = Int16GetDatum(MAX_NEWS_LEN);
+
 			if (access_lob_flag == true) {
 				ret = SPI_execute_plan(SDF1_6, args, nulls, true, 0);
 			} else {
@@ -745,7 +746,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(SDF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -776,6 +777,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (SDF1_savedcxt) MemoryContextSwitchTo(SDF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
