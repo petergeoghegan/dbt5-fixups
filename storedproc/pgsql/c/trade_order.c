@@ -174,6 +174,8 @@
 #define TOF4_2  TOF4_statements[1].plan
 #define TOF4_3  TOF4_statements[2].plan
 
+static MemoryContext TOF1_savedcxt = NULL;
+static MemoryContext TOF3_savedcxt = NULL;
 
 static cached_statement TOF1_statements[] =
 {
@@ -505,8 +507,6 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum tof1 {
 				i_acct_name=0, i_broker_id, i_broker_name, i_cust_f_name,
 				i_cust_id, i_cust_l_name, i_cust_tier, i_num_found, i_tax_id,
@@ -541,7 +541,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TOF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TOF1_statements);
@@ -568,6 +568,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF1_statements[0].sql);
 
 			SPI_finish();
+			if (TOF1_savedcxt) MemoryContextSwitchTo(TOF1_savedcxt);
 			SRF_RETURN_DONE(funcctx);
 		}
 
@@ -591,6 +592,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF1_statements[1].sql);
 
 			SPI_finish();
+			if (TOF1_savedcxt) MemoryContextSwitchTo(TOF1_savedcxt);
 			SRF_RETURN_DONE(funcctx);
 		}
 
@@ -627,7 +629,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TOF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -658,6 +660,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TOF1_savedcxt) MemoryContextSwitchTo(TOF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -753,8 +756,6 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		long acct_id = PG_GETARG_INT64(0);
 		long cust_id = PG_GETARG_INT64(1);
 		int cust_tier = PG_GETARG_INT16(2);
@@ -846,7 +847,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		sprintf(values[i_requested_price], "%8.2f", requested_price);
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TOF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TOF3_statements);
@@ -1256,7 +1257,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TOF3_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -1287,6 +1288,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TOF3_savedcxt) MemoryContextSwitchTo(TOF3_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

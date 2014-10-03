@@ -49,6 +49,8 @@ PG_MODULE_MAGIC;
 #define TSF1_1 TSF1_statements[0].plan
 #define TSF1_2 TSF1_statements[1].plan
 
+static MemoryContext TSF1_savedcxt = NULL;
+
 static cached_statement TSF1_statements[] = {
 
 	/* TSF1_1 */
@@ -109,8 +111,6 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum tsf1 {
 				i_broker_name=0, i_charge, i_cust_f_name, i_cust_l_name,
 				i_ex_name, i_exec_name, i_num_found, i_s_name, i_status_name,
@@ -169,7 +169,7 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TSF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TSF1_statements);
@@ -279,7 +279,7 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TSF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -310,6 +310,7 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TSF1_savedcxt) MemoryContextSwitchTo(TSF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
