@@ -362,6 +362,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
 		MemoryContext oldcontext;
+		bool SDF11_not_match = false;
 
 		bool access_lob_flag = PG_GETARG_BOOL(0);
 		int max_rows_to_return = PG_GETARG_INT32(1);
@@ -493,36 +494,25 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 			int iter;
 
 			for (iter = i_x52_wk_high; iter <= i_yield; iter++) {
-				if (	iter == i_cp_co_name	||
-					iter == i_cp_in_name	||
-					iter == i_fin_len	||
-					iter == i_fin		||
-					iter == i_day_len	||
-					iter == i_day		||
-					iter == i_news_len	||
-					iter == i_news		)
+				switch (iter) {
+				case i_cp_co_name :
+				case i_cp_in_name :
+				case i_fin_len    :
+				case i_fin        :
+				case i_day_len    :
+				case i_day        :
+				case i_news_len   :
+				case i_news       :
 					continue;
-				values[iter] = NULL;
+				default           :
+					values[iter] = NULL;
+				}
 			}
 
 			tupdesc = SPI_tuptable->tupdesc;
-			/* for SDF1.2 */
-			strcpy(values[i_cp_co_name], "{}");
-			strcpy(values[i_cp_in_name], "{}");
+			tuptable = SPI_tuptable;
 
-			/* for SDF1.3 */
-			sprintf(values[i_fin_len], "0"); /* Of course! :-) */
-			strcpy(values[i_fin], "{}");
-
-			/* for SDF1.4 */
-			sprintf(values[i_day_len], "0");
-			strcpy(values[i_day], "{}");
-
-			/* for SDF1.6 and SDF1.7 */
-			sprintf(values[i_news_len], "0");
-			strcpy(values[i_news], "{}");
-
-			goto zero_finish;
+			SDF11_not_match = true;
 		} else {
 			dump_sdf1_inputs(access_lob_flag, max_rows_to_return, buf, symbol);
 			FAIL_FRAME_SET(&funcctx->max_calls, SDF1_statements[0].sql);
@@ -532,9 +522,11 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		sprintf(sql, SQLSDF1_2, co_id, MAX_COMP_LEN);
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-		args[0] = Int64GetDatum(atoll(co_id));
-		args[1] = Int16GetDatum(MAX_COMP_LEN);
-		ret = SPI_execute_plan(SDF1_2, args, nulls, true, 0);
+		if (!SDF11_not_match) {
+			args[0] = Int64GetDatum(atoll(co_id));
+			args[1] = Int16GetDatum(MAX_COMP_LEN);
+			ret = SPI_execute_plan(SDF1_2, args, nulls, true, 0);
+		}
 		if (ret == SPI_OK_SELECT) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;
@@ -577,9 +569,11 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		sprintf(sql, SQLSDF1_3, co_id, MAX_FIN_LEN);
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-		args[0] = Int64GetDatum(atoll(co_id));
-		args[1] = Int16GetDatum(MAX_FIN_LEN);
-		ret = SPI_execute_plan(SDF1_3, args, nulls, true, 0);
+		if (!SDF11_not_match) {
+			args[0] = Int64GetDatum(atoll(co_id));
+			args[1] = Int16GetDatum(MAX_FIN_LEN);
+			ret = SPI_execute_plan(SDF1_3, args, nulls, true, 0);
+		}
 		if (ret == SPI_OK_SELECT) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;
@@ -627,11 +621,13 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		sprintf(sql, SQLSDF1_4, symbol, pstrdup(buf), max_rows_to_return);
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-		args[0] = CStringGetTextDatum(symbol);
-		args[1] = DirectFunctionCall1(date_in,
-						CStringGetDatum(pstrdup(buf)));
-		args[2] = Int16GetDatum(max_rows_to_return);
-		ret = SPI_execute_plan(SDF1_4, args, nulls, true, 0);
+		if (!SDF11_not_match) {
+			args[0] = CStringGetTextDatum(symbol);
+			args[1] = DirectFunctionCall1(date_in,
+							CStringGetDatum(pstrdup(buf)));
+			args[2] = Int16GetDatum(max_rows_to_return);
+			ret = SPI_execute_plan(SDF1_4, args, nulls, true, 0);
+		}
 		if (ret == SPI_OK_SELECT) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;
@@ -664,21 +660,23 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		sprintf(sql, SQLSDF1_5, symbol);
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-		args[0] = CStringGetTextDatum(symbol);
-		ret = SPI_execute_plan(SDF1_5, args, nulls, true, 0);
-		if (ret == SPI_OK_SELECT) {
-			tupdesc = SPI_tuptable->tupdesc;
-			tuptable = SPI_tuptable;
-			tuple = tuptable->vals[0];
-			values[i_last_price] = SPI_getvalue(tuple, tupdesc, 1);
-			values[i_last_open] = SPI_getvalue(tuple, tupdesc, 2);
-			values[i_last_vol] = SPI_getvalue(tuple, tupdesc, 3);
-		} else {
-			dump_sdf1_inputs(access_lob_flag, max_rows_to_return, buf, symbol);
-			FAIL_FRAME_SET(&funcctx->max_calls, SDF1_statements[4].sql);
-			values[i_last_open] = NULL;
-			values[i_last_price] = NULL;
-			values[i_last_vol] = NULL;
+		if (!SDF11_not_match) {
+			args[0] = CStringGetTextDatum(symbol);
+			ret = SPI_execute_plan(SDF1_5, args, nulls, true, 0);
+			if (ret == SPI_OK_SELECT) {
+				tupdesc = SPI_tuptable->tupdesc;
+				tuptable = SPI_tuptable;
+				tuple = tuptable->vals[0];
+				values[i_last_price] = SPI_getvalue(tuple, tupdesc, 1);
+				values[i_last_open] = SPI_getvalue(tuple, tupdesc, 2);
+				values[i_last_vol] = SPI_getvalue(tuple, tupdesc, 3);
+			} else {
+				dump_sdf1_inputs(access_lob_flag, max_rows_to_return, buf, symbol);
+				FAIL_FRAME_SET(&funcctx->max_calls, SDF1_statements[4].sql);
+				values[i_last_open] = NULL;
+				values[i_last_price] = NULL;
+				values[i_last_vol] = NULL;
+			}
 		}
 #ifdef DEBUG
 		if (access_lob_flag == true) {
@@ -691,10 +689,12 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		args[0] = Int64GetDatum(atoll(co_id));
 		args[1] = Int16GetDatum(MAX_NEWS_LEN);
 
-		if (access_lob_flag == true) {
-			ret = SPI_execute_plan(SDF1_6, args, nulls, true, 0);
-		} else {
-			ret = SPI_execute_plan(SDF1_7, args, nulls, true, 0);
+		if (!SDF11_not_match) {
+			if (access_lob_flag == true) {
+				ret = SPI_execute_plan(SDF1_6, args, nulls, true, 0);
+			} else {
+				ret = SPI_execute_plan(SDF1_7, args, nulls, true, 0);
+			}
 		}
 		if (ret == SPI_OK_SELECT) {
 			tupdesc = SPI_tuptable->tupdesc;
@@ -729,7 +729,6 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		}
 		strcat(values[i_news], "}");
 
-zero_finish:
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) !=
 				TYPEFUNC_COMPOSITE) {
