@@ -159,13 +159,13 @@
 #endif /* End DEBUG */
 
 
-#define SDF1_1 SDF1_statements[0].plan
-#define SDF1_2 SDF1_statements[1].plan
-#define SDF1_3 SDF1_statements[2].plan
-#define SDF1_4 SDF1_statements[3].plan
-#define SDF1_5 SDF1_statements[4].plan
-#define SDF1_6 SDF1_statements[5].plan
-#define SDF1_7 SDF1_statements[6].plan
+#define SDF1_1 (*SDF1_statements[0].plan)
+#define SDF1_2 (*SDF1_statements[1].plan)
+#define SDF1_3 (*SDF1_statements[2].plan)
+#define SDF1_4 (*SDF1_statements[3].plan)
+#define SDF1_5 (*SDF1_statements[4].plan)
+#define SDF1_6 (*SDF1_statements[5].plan)
+#define SDF1_7 (*SDF1_statements[6].plan)
 
 static MemoryContext SDF1_savedcxt = NULL;
 
@@ -396,8 +396,9 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 #endif
 		char *co_id = NULL;
 		Datum args[3];
-		char nulls[3] = { ' ', ' ', ' ' };
+		char nulls[3];
 
+		memset(nulls, 0, sizeof(nulls));
 		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))), S_SYMB_LEN);
 		symbol[S_SYMB_LEN] = '\0';
@@ -440,7 +441,8 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		SDF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(SDF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLSDF1_1, symbol);

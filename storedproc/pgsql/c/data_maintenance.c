@@ -189,32 +189,32 @@ PG_MODULE_MAGIC;
 		"  AND wi_s_symb = '%s'"
 #endif /* End of DEBUG */
 
-#define DMF1_1 	 DMF1_statements[0].plan
-#define DMF1_2   DMF1_statements[1].plan
-#define DMF1_3a  DMF1_statements[2].plan
-#define DMF1_3b  DMF1_statements[3].plan
-#define DMF1_4   DMF1_statements[4].plan
-#define DMF1_5   DMF1_statements[5].plan
-#define DMF1_6   DMF1_statements[6].plan
-#define DMF1_7   DMF1_statements[7].plan
-#define DMF1_8   DMF1_statements[8].plan
-#define DMF1_9   DMF1_statements[9].plan
-#define DMF1_10  DMF1_statements[10].plan
-#define DMF1_11  DMF1_statements[11].plan
-#define DMF1_12  DMF1_statements[12].plan
-#define DMF1_13a DMF1_statements[13].plan
-#define DMF1_13b DMF1_statements[14].plan
-#define DMF1_14  DMF1_statements[15].plan
-#define DMF1_15a DMF1_statements[16].plan
-#define DMF1_15b DMF1_statements[17].plan
-#define DMF1_16  DMF1_statements[18].plan
-#define DMF1_17  DMF1_statements[19].plan
-#define DMF1_18  DMF1_statements[20].plan
-#define DMF1_19  DMF1_statements[21].plan
-#define DMF1_20  DMF1_statements[22].plan
-#define DMF1_21  DMF1_statements[23].plan
-#define DMF1_22  DMF1_statements[24].plan
-#define DMF1_23  DMF1_statements[25].plan
+#define DMF1_1 	 (*DMF1_statements[0].plan)
+#define DMF1_2   (*DMF1_statements[1].plan)
+#define DMF1_3a  (*DMF1_statements[2].plan)
+#define DMF1_3b  (*DMF1_statements[3].plan)
+#define DMF1_4   (*DMF1_statements[4].plan)
+#define DMF1_5   (*DMF1_statements[5].plan)
+#define DMF1_6   (*DMF1_statements[6].plan)
+#define DMF1_7   (*DMF1_statements[7].plan)
+#define DMF1_8   (*DMF1_statements[8].plan)
+#define DMF1_9   (*DMF1_statements[9].plan)
+#define DMF1_10  (*DMF1_statements[10].plan)
+#define DMF1_11  (*DMF1_statements[11].plan)
+#define DMF1_12  (*DMF1_statements[12].plan)
+#define DMF1_13a (*DMF1_statements[13].plan)
+#define DMF1_13b (*DMF1_statements[14].plan)
+#define DMF1_14  (*DMF1_statements[15].plan)
+#define DMF1_15a (*DMF1_statements[16].plan)
+#define DMF1_15b (*DMF1_statements[17].plan)
+#define DMF1_16  (*DMF1_statements[18].plan)
+#define DMF1_17  (*DMF1_statements[19].plan)
+#define DMF1_18  (*DMF1_statements[20].plan)
+#define DMF1_19  (*DMF1_statements[21].plan)
+#define DMF1_20  (*DMF1_statements[22].plan)
+#define DMF1_21  (*DMF1_statements[23].plan)
+#define DMF1_22  (*DMF1_statements[24].plan)
+#define DMF1_23  (*DMF1_statements[25].plan)
 
 static cached_statement DMF1_statements[] = {
 	/* DMF1_1 */
@@ -525,8 +525,9 @@ Datum DataMaintenanceFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	int status = 0;
 	Datum args[3];
-	char nulls[3] = { ' ', ' ', ' ' };
+	char nulls[3];
 
+	memset(nulls, 0, sizeof(nulls));
 	strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(symbol_p))), S_SYMB_LEN);
 	symbol[S_SYMB_LEN] = '\0';
@@ -542,7 +543,8 @@ Datum DataMaintenanceFrame1(PG_FUNCTION_ARGS)
 			tx_id, vol_incr);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(DMF1_statements);
 
 	if (strcmp(table_name, "ACCOUNT_PERMISSION") == 0) {

@@ -17,7 +17,7 @@
 
 # Platform specific defines
 #CXX=
-CCFLAGS=-g -ggdb -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+CCFLAGS=-g -fno-strict-aliasing -fwrapv -ggdb -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
 LDFLAGS=-lpthread
 #AR=
 #ARFLAGS=

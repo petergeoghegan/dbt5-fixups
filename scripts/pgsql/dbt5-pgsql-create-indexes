@@ -989,3 +989,19 @@ ON holding_history (hh_t_id);
 " & pids="$pids $!"
 
 wait ${pids}
+
+# Unset these for benchmark:
+psql ${PORTARG} -e ${DBNAMEARG} -c "
+    ALTER TABLE trade RESET (autovacuum_freeze_min_age);
+    ALTER TABLE trade_history RESET (autovacuum_freeze_min_age);
+    ALTER TABLE cash_transaction RESET (autovacuum_freeze_min_age);
+    ALTER TABLE holding_history RESET (autovacuum_freeze_min_age);
+    ALTER TABLE settlement RESET (autovacuum_freeze_min_age);
+    ALTER TABLE daily_market RESET (autovacuum_freeze_min_age);
+    ALTER TABLE holding RESET (autovacuum_freeze_min_age);
+    ALTER TABLE watch_item RESET (autovacuum_freeze_min_age);
+    ALTER TABLE holding_summary RESET (autovacuum_freeze_min_age);
+    ALTER TABLE financial RESET (autovacuum_freeze_min_age);
+    ALTER TABLE account_permission RESET (autovacuum_freeze_min_age);
+    ALTER TABLE customer_account RESET (autovacuum_freeze_min_age);
+" || exit 1
