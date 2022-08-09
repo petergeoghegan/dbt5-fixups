@@ -60,10 +60,14 @@ IF (PG_CONFIG_FOUND)
 	MESSAGE(STATUS "Found pg_config for PostgreSQL: ${PG_CONFIG}")
 	EXECUTE_PROCESS(COMMAND ${PG_CONFIG} --includedir OUTPUT_VARIABLE
 			PG_INCLUDEDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+	MESSAGE(STATUS "AAAAA: ${OUTPUT_VARIABLE} - ${PG_INCLUDEDIR} - ${OUTPUT_STRIP_TRAILING_WHITESPACE} - ${PG_LIBDIR}")
 	EXECUTE_PROCESS(COMMAND ${PG_CONFIG} --libdir OUTPUT_VARIABLE
 			PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+	MESSAGE(STATUS "BBBBB: ${OUTPUT_VARIABLE} - ${PG_INCLUDEDIR} - ${OUTPUT_STRIP_TRAILING_WHITESPACE} - ${PG_LIBDIR}")
 
-	SET(DBCFLAGS "-DLIBPQ -I${PG_INCLUDEDIR}")
+	SET(DBCFLAGS "-DLIBPQ -I${PG_INCLUDEDIR} -lpq -L${PG_LIBDIR}")
+    set (DBCFLAGS "${DBCFLAGS} -DHAVE_LIBPQ ${LIBPQ_CFLAGS}")
+	MESSAGE(STATUS "CCCCC: ${DBCFLAGS}")
 
 	SET(DB_LIBS "-L${PG_LIBDIR} -lpq")
 
@@ -81,8 +85,12 @@ IF (PG_CONFIG_FOUND)
 				   scripts/pgsql/dbt5-pgsql-stop-db
 				   scripts/pgsql/dbt5-pgsql-create-db
 				   scripts/pgsql/dbt5-pgsql-build-db)
-	set (DBCFLAGS "${DBCFLAGS} -DHAVE_LIBPQ ${LIBPQ_CFLAGS}")
+	set (DBCFLAGS "${DBCFLAGS} ${DB_LIBS} -DHAVE_LIBPQ ${LIBPQ_CFLAGS}")
+	MESSAGE(STATUS "DDDDD DBCFLAGS: ${DBCFLAGS}")
 
+	SET(LIBPQ_LDFLAGS "-DLIBPQ -I${PG_INCLUDEDIR} -lpq -L${PG_LIBDIR}")
+	#set (DBCFLAGS "${DBCFLAGS} -DHAVE_LIBPQ ${LIBPQ_CFLAGS}")
+	MESSAGE(STATUS "c plus cplus thing: ${LIBPQ_LDFLAGS}")
 	set (DB_SOURCE
 		 ${DB_SOURCE}
 		 ${TXN}/pgsql/DBConnection.cpp
@@ -219,10 +227,8 @@ target_link_libraries (${DBT5_DRIVER} -lpthread)
 target_link_libraries (${DBT5_MARKET_EXCHANGE} -lpthread)
 target_link_libraries (${DBT5_TEST_TXN} -lpthread)
 
-if (LIBPQ_FOUND)
-    target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
-    target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
-endif (LIBPQ_FOUND)
+target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
+target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
 
 #
 # Set compiler flags.
