@@ -30,4 +30,4 @@ Using the following settings.
 
 To actually run the test:
 pg@bat:~/code/dbt5 peter-monkeys-around-2022$ source env-vars
-pg@bat:~/code/dbt5 peter-monkeys-around-2022$ rm -rf /tmp/results; dbt5-run-workload -a pgsql -c 5000 -d 3600 -u 100 -f 500 -w 300 -n dbt5 -o /tmp/results
+pg@bat:~/code/dbt5 peter-monkeys-around-2022$ rm -rf /tmp/results; dbt5-run-workload -a pgsql -c 5000 -t 5000 -d 3600 -u 100 -f 500 -w 300 -n dbt5 -o /tmp/results
