@@ -40,9 +40,7 @@
 		"ORDER BY 2 DESC"
 #endif /* DEBUG END */
 
-#define BVF1_1 BVF1_statements[0].plan
-
-static MemoryContext BVF1_savedcxt = NULL;
+#define BVF1_1 (*BVF1_statements[0].plan)
 
 static cached_statement BVF1_statements[] =
 {
@@ -148,13 +146,14 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 #endif
 		char broker_list_array[(B_NAME_LEN + 3) * 40 + 5] = "'{";
 		Datum args[2];
-		char nulls[2] = { ' ', ' ' };
+		char nulls[2];
 
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 3);
 		values[i_list_len] = (char *) palloc((SMALLINT_LEN + 1) * sizeof(char));
 
@@ -200,10 +199,8 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		funcctx->max_calls = 1;
 
-		/* switch to memory context appropriate for multiple function calls */
-		BVF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(BVF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLBVF1_1, broker_list_array,
@@ -271,8 +268,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		 */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
-
-		MemoryContextSwitchTo(BVF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -303,7 +298,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
-		if (BVF1_savedcxt) MemoryContextSwitchTo(BVF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

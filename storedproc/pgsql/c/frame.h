@@ -11,13 +11,16 @@
 #define _FRAME_H_
 
 #define FAIL_FRAME(sql) \
-		elog(WARNING, "UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
-				__FILE__, __LINE__, sql);
-
-#define FAIL_FRAME_SET(rows, sql) \
-		elog(WARNING, "UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
+	do { \
+		elog(WARNING, "DBT5: UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
 				__FILE__, __LINE__, sql); \
-		*rows = 0;
+	} while (0)
+#define FAIL_FRAME_SET(rows, sql) \
+	do { \
+		elog(WARNING, "DBT5: UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
+				__FILE__, __LINE__, sql); \
+		*rows = 0; \
+	} while (0)
 
 /* PostgreSQL types */
 #define BIGINT_LEN 20

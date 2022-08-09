@@ -17,6 +17,7 @@
 #include <funcapi.h> /* for returning set of rows in order_status */
 #include <utils/numeric.h>
 #include <utils/builtins.h>
+#include "catalog/pg_collation.h"
 #include <catalog/pg_type.h>
 
 #include "frame.h"
@@ -150,32 +151,33 @@
 		"VALUES(%ld, now(), '%s')"
 #endif /* DEBUG */
 
-#define TOF1_1  TOF1_statements[0].plan
-#define TOF1_2  TOF1_statements[1].plan
-#define TOF1_3  TOF1_statements[2].plan
+#define TOF1_1  (*TOF1_statements[0].plan)
+#define TOF1_2  (*TOF1_statements[1].plan)
+#define TOF1_3  (*TOF1_statements[2].plan)
 
-#define TOF2_1  TOF2_statements[0].plan
+#define TOF2_1  (*TOF2_statements[0].plan)
 
-#define TOF3_1a TOF3_statements[0].plan
-#define TOF3_2a TOF3_statements[1].plan
-#define TOF3_1b TOF3_statements[2].plan
-#define TOF3_2b TOF3_statements[3].plan
-#define TOF3_3  TOF3_statements[4].plan
-#define TOF3_4  TOF3_statements[5].plan
-#define TOF3_5  TOF3_statements[6].plan
-#define TOF3_6a TOF3_statements[7].plan
-#define TOF3_6b TOF3_statements[8].plan
-#define TOF3_7  TOF3_statements[9].plan
-#define TOF3_8  TOF3_statements[10].plan
-#define TOF3_9  TOF3_statements[11].plan
-#define TOF3_10 TOF3_statements[12].plan
-#define TOF3_11 TOF3_statements[13].plan
+#define TOF3_1a (*TOF3_statements[0].plan)
+#define TOF3_2a (*TOF3_statements[1].plan)
+#define TOF3_1b (*TOF3_statements[2].plan)
+#define TOF3_2b (*TOF3_statements[3].plan)
+#define TOF3_3  (*TOF3_statements[4].plan)
+#define TOF3_4  (*TOF3_statements[5].plan)
+#define TOF3_5  (*TOF3_statements[6].plan)
+#define TOF3_6a (*TOF3_statements[7].plan)
+#define TOF3_6b (*TOF3_statements[8].plan)
+#define TOF3_7  (*TOF3_statements[9].plan)
+#define TOF3_8  (*TOF3_statements[10].plan)
+#define TOF3_9  (*TOF3_statements[11].plan)
+#define TOF3_10 (*TOF3_statements[12].plan)
+#define TOF3_11 (*TOF3_statements[13].plan)
 
-#define TOF4_1  TOF4_statements[0].plan
-#define TOF4_2  TOF4_statements[1].plan
-#define TOF4_3  TOF4_statements[2].plan
+#define TOF4_1  (*TOF4_statements[0].plan)
+#define TOF4_2  (*TOF4_statements[1].plan)
+#define TOF4_3  (*TOF4_statements[2].plan)
 
 static MemoryContext TOF1_savedcxt = NULL;
+static MemoryContext TOF2_savedcxt = NULL;
 static MemoryContext TOF3_savedcxt = NULL;
 
 static cached_statement TOF1_statements[] =
@@ -521,7 +523,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple = NULL;
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 #ifdef DEBUG
 		char sql[2048];
 #endif /* DEBUG */
@@ -530,6 +532,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 10);
 		values[i_num_found] = (char *) palloc((BIGINT_LEN + 1) * sizeof(char));
 
@@ -544,7 +547,8 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TOF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TOF1_statements);
 
 #ifdef DEBUG
@@ -563,7 +567,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 			values[i_broker_id] = SPI_getvalue(tuple, tupdesc, 2);
 			values[i_cust_id] = SPI_getvalue(tuple, tupdesc, 3);
 			values[i_tax_status] = SPI_getvalue(tuple, tupdesc, 4);
-			sprintf(values[i_num_found], "%" PRId64, SPI_processed);
+			sprintf(values[i_num_found], "%ld", SPI_processed);
 		} else {
 			dump_tof1_inputs(acct_id);
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF1_statements[0].sql);
@@ -670,15 +674,13 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 {
 	long acct_id = PG_GETARG_INT64(0);
-	char *exec_f_name_p = (char *) PG_GETARG_TEXT_P(1);
-	char *exec_l_name_p = (char *) PG_GETARG_TEXT_P(2);
-	char *exec_tax_id_p = (char *) PG_GETARG_TEXT_P(3);
-
-	char exec_f_name[AP_F_NAME_LEN + 1];
-	char exec_l_name[AP_L_NAME_LEN + 1];
-	char exec_tax_id[AP_TAX_ID_LEN + 1];
+	text       *exec_f_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(1));
+	text       *exec_l_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(2));
+	text       *exec_tax_id = DatumGetTextPCopy(PG_GETARG_TEXT_P(3));
+	MemoryContext memctx = CurrentMemoryContext;
 
 	int ret;
+	text *res;
 	TupleDesc tupdesc;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
@@ -689,30 +691,32 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 
 	char *ap_acl = NULL;
 	Datum args[5];
-	char nulls[5] = { ' ', ' ', ' ', ' ', ' '};
+	char nulls[5];
 
-	strcpy(exec_f_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_f_name_p))));
-	strcpy(exec_l_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_l_name_p))));
-	strcpy(exec_tax_id, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_tax_id_p))));
+	memset(nulls, 0, sizeof(nulls));
 #ifdef DEBUG
-	dump_tof2_inputs(acct_id, exec_f_name, exec_l_name, exec_tax_id);
+	dump_tof2_inputs(acct_id,
+					 text_to_cstring(exec_f_name),
+					 text_to_cstring(exec_l_name),
+					 text_to_cstring(exec_tax_id));
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TOF2_statements);
 
 #ifdef DEBUG
-	sprintf(sql, SQLTOF2_1, acct_id, exec_f_name, exec_l_name, exec_tax_id);
+	sprintf(sql, SQLTOF2_1, acct_id,
+			text_to_cstring(exec_f_name),
+			text_to_cstring(exec_l_name),
+			text_to_cstring(exec_tax_id));
 	elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 
 	args[0] = Int64GetDatum(acct_id);
-	args[1] = CStringGetTextDatum(exec_f_name);
-	args[2] = CStringGetTextDatum(exec_l_name);
-	args[3] = CStringGetTextDatum(exec_tax_id);
+	args[1] = PointerGetDatum(exec_f_name);
+	args[2] = PointerGetDatum(exec_l_name);
+	args[3] = PointerGetDatum(exec_tax_id);
 
 	ret = SPI_execute_plan(TOF2_1, args, nulls, true, 0);
 	if (ret == SPI_OK_SELECT) {
@@ -724,15 +728,23 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 		}
 	} else {
 		FAIL_FRAME(TOF2_statements[0].sql);
-		dump_tof2_inputs(acct_id, exec_f_name, exec_l_name, exec_tax_id);
+		dump_tof2_inputs(acct_id,
+						 text_to_cstring(exec_f_name),
+						 text_to_cstring(exec_l_name),
+						 text_to_cstring(exec_tax_id));
 	}
 
 #ifdef DEBUG
 	elog(NOTICE, "TOF2 OUT: 1 %s", ap_acl);
 #endif /* DEBUG */
 
+	TOF2_savedcxt = MemoryContextSwitchTo(memctx);
+	res = cstring_to_text_with_len(ap_acl, AP_ACL_LEN);
+	if (TOF2_savedcxt) MemoryContextSwitchTo(TOF2_savedcxt);
+
 	SPI_finish();
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(ap_acl, AP_ACL_LEN));
+
+	PG_RETURN_VARCHAR_P(res);
 }
 
 /* Clause 3.3.7.5 */
@@ -744,7 +756,6 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 	int max_calls;
 
 	int i;
-	int k = 0;
 
 	enum tof3 {
 			i_co_name=0, i_requested_price, i_symbol, i_buy_value,
@@ -768,16 +779,14 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		int trade_qty = PG_GETARG_INT32(8);
 		char *trade_type_id_p = (char *) PG_GETARG_TEXT_P(9);
 		int type_is_margin = PG_GETARG_INT16(10);
-		char *co_name_p = (char *) PG_GETARG_TEXT_P(11);
+		text       *co_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(11));
 		Numeric requested_price_num = PG_GETARG_NUMERIC(12);
-		char *symbol_p = (char *) PG_GETARG_TEXT_P(13);
+		text       *symbol  = DatumGetTextPCopy(PG_GETARG_TEXT_P(13));
 
-		char co_name[CO_NAME_LEN + 1];
 		char issue[7];
 		char st_pending_id[10];
 		char st_submitted_id[10];
 		char trade_type_id[TT_ID_LEN + 1];
-		char symbol[S_SYMB_LEN + 1];
 		double requested_price;
 		int hs_qty = 0;
 		int needed_qty;
@@ -795,12 +804,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		char *co_id = NULL;
 		double tax_amount = 0;
 		Datum args[5];
-		char nulls[5] = { ' ', ' ', ' ', ' ', ' '};
+		char nulls[5];
 
-		char co_name_esc[CO_NAME_LEN * 2 + 1];
-
-		strcpy(co_name, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(co_name_p))));
+		memset(nulls, 0, sizeof(nulls));
 		strcpy(issue, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(issue_p))));
 		strcpy(st_pending_id, DatumGetCString(DirectFunctionCall1(textout,
@@ -809,8 +815,6 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				PointerGetDatum(st_submitted_id_p))));
 		strcpy(trade_type_id, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(trade_type_id_p))));
-		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(symbol_p))));
 
 		requested_price = DatumGetFloat8(DirectFunctionCall1(
 				numeric_float8_no_overflow,
@@ -821,7 +825,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
-		values = (char **) palloc(sizeof(char *) * 14);
+		values = (char **) palloc(sizeof(char *) * 15);
 		values[i_requested_price] = (char *) palloc((S_PRICE_T_LEN + 1) *
 				sizeof(char));
 		values[i_buy_value] = (char *) palloc((S_PRICE_T_LEN + 1) *
@@ -838,35 +842,35 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 #ifdef DEBUG
 		dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 				st_pending_id, st_submitted_id, tax_status, trade_qty,
-				trade_type_id, type_is_margin, co_name, requested_price,
-				symbol);
+				trade_type_id, type_is_margin, text_to_cstring(co_name),
+				requested_price, text_to_cstring(symbol));
 #endif
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 		funcctx->max_calls = 1;
-		sprintf(values[i_requested_price], "%8.2f", requested_price);
+		snprintf(values[i_requested_price], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", requested_price);
 
 		/* switch to memory context appropriate for multiple function calls */
 		TOF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TOF3_statements);
 
-		if (strlen(symbol) == 0) {
-			for (i = 0; i < CO_NAME_LEN && co_name[i] != '\0'; i++) {
-				if (co_name[i] == '\'')
-					co_name_esc[k++] = '\\';
-				co_name_esc[k++] = co_name[i];
-			}
-			co_name_esc[k] = '\0';
-
-			values[i_co_name] = co_name_esc;
+		/*
+		 * Escape co_name.
+		 *
+		 * XXX Do we still need this, given that we now use prepared statements?
+		 */
+		if (VARSIZE_ANY_EXHDR(PointerGetDatum(symbol)) == 0) {
+			values[i_co_name] = text_to_cstring(co_name);
 #ifdef DEBUG
-			sprintf(sql, SQLTOF3_1a, co_name_esc);
+			sprintf(sql, SQLTOF3_1a, text_to_cstring(co_name));
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			args[0] = PointerGetDatum(co_name_p);
+			args[0] = PointerGetDatum(co_name);
 
 			ret = SPI_execute_plan(TOF3_1a, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT && SPI_processed > 0) {
@@ -877,8 +881,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[0].sql);
 			}
 
@@ -900,17 +905,18 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[1].sql);
 			}
 		} else {
-			values[i_symbol] = symbol;
+			values[i_symbol] = text_to_cstring(symbol);
 #ifdef DEBUG
-			sprintf(sql, SQLTOF3_1b, symbol);
+			sprintf(sql, SQLTOF3_1b, text_to_cstring(symbol));
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			args[0] = CStringGetTextDatum(symbol);
+			args[0] = PointerGetDatum(symbol);
 
 			ret = SPI_execute_plan(TOF3_1b, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT && SPI_processed > 0) {
@@ -923,8 +929,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[2].sql);
 			}
 
@@ -943,8 +950,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[3].sql);
 			}
 		}
@@ -964,8 +972,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[4].sql);
 		}
 
@@ -985,8 +993,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[5].sql);
 		}
 
@@ -1037,8 +1045,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls,(hs_qty > 0? TOF3_statements[7].sql:
 								TOF3_statements[8].sql));
 			}
@@ -1087,8 +1096,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				} else {
 					dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo,
 							issue, st_pending_id, st_submitted_id, tax_status,
-							trade_qty, trade_type_id, type_is_margin, co_name,
-							requested_price, symbol);
+							trade_qty, trade_type_id, type_is_margin,
+							text_to_cstring(co_name), requested_price,
+							text_to_cstring(symbol));
 					FAIL_FRAME_SET(&funcctx->max_calls, (is_lifo == 1?						 			TOF3_statements[7].sql: TOF3_statements[8].sql));
 				}
 			}
@@ -1114,8 +1124,10 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			}
 		}
 
-		sprintf(values[i_buy_value], "%8.2f", buy_value);
-		sprintf(values[i_sell_value], "%8.2f", sell_value);
+		snprintf(values[i_buy_value], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", buy_value);
+		snprintf(values[i_sell_value], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", sell_value);
 
 		if (sell_value > buy_value && (tax_status == 1 || tax_status == 2)) {
 #ifdef DEBUG
@@ -1134,12 +1146,14 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[9].sql);
 			}
 		}
-		sprintf(values[i_tax_amount], "%8.2f", tax_amount);
+		snprintf(values[i_tax_amount], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", tax_amount);
 
 #ifdef DEBUG
 		sprintf(sql, SQLTOF3_8, cust_tier, trade_type_id, exch_id, trade_qty,
@@ -1161,8 +1175,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[8].sql);
 		}
 
@@ -1182,8 +1196,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[11].sql);
 		}
 
@@ -1206,8 +1220,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[12].sql);
 			}
 
@@ -1217,20 +1232,27 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			ret = SPI_execute_plan(TOF3_11, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT) {
+				char *val = NULL;
 				tupdesc = SPI_tuptable->tupdesc;
 				tuptable = SPI_tuptable;
 				if (SPI_processed > 0) {
 					tuple = tuptable->vals[0];
-					sprintf(values[i_cust_assets], "%8.2f",
-							atof(SPI_getvalue(tuple, tupdesc, 1)) * acct_bal);
+					val = SPI_getvalue(tuple, tupdesc, 1);
+				}
+				if (SPI_processed > 0 && val) {
+					tuple = tuptable->vals[0];
+					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
+							 "%8.2f", atof(val) * acct_bal);
 				} else {
-					sprintf(values[i_cust_assets], "%8.2f", acct_bal);
+					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
+							 "%8.2f", acct_bal);
 				}
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[13].sql);
 
 			}
@@ -1329,9 +1351,9 @@ Datum TradeOrderFrame4(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	long trade_id = 0;
 	Datum args[11];
-	char nulls[11] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-					' ', ' ', ' ', ' ' };
+	char nulls[11];
 
+	memset(nulls, 0, sizeof(nulls));
 	strcpy(exec_name, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(exec_name_p))));
 	strcpy(status_id, DatumGetCString(DirectFunctionCall1(textout,
@@ -1357,7 +1379,8 @@ Datum TradeOrderFrame4(PG_FUNCTION_ARGS)
 			trade_qty, trade_type_id, type_is_market);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TOF4_statements);
 
 #ifdef DEBUG

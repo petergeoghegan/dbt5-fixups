@@ -29,7 +29,6 @@ PG_MODULE_MAGIC;
 
 #define USE_ISO_DATES 1
 #define MAXDATEFIELDS 25
-#define MYMAXDATELEN 63
 
 #ifdef DEBUG
 #define SQLTLF1_1 \
@@ -126,23 +125,23 @@ PG_MODULE_MAGIC;
 		"      WHERE hh_t_id = %s)"
 #endif /* End DEBUG */
 
-#define TLF1_1 TLF1_statements[0].plan
-#define TLF1_2 TLF1_statements[1].plan
-#define TLF1_3 TLF1_statements[2].plan
-#define TLF1_4 TLF1_statements[3].plan
+#define TLF1_1 (*TLF1_statements[0].plan)
+#define TLF1_2 (*TLF1_statements[1].plan)
+#define TLF1_3 (*TLF1_statements[2].plan)
+#define TLF1_4 (*TLF1_statements[3].plan)
 
-#define TLF2_1 TLF2_statements[0].plan
-#define TLF2_2 TLF2_statements[1].plan
-#define TLF2_3 TLF2_statements[2].plan
-#define TLF2_4 TLF2_statements[3].plan
+#define TLF2_1 (*TLF2_statements[0].plan)
+#define TLF2_2 (*TLF2_statements[1].plan)
+#define TLF2_3 (*TLF2_statements[2].plan)
+#define TLF2_4 (*TLF2_statements[3].plan)
 
-#define TLF3_1 TLF3_statements[0].plan
-#define TLF3_2 TLF3_statements[1].plan
-#define TLF3_3 TLF3_statements[2].plan
-#define TLF3_4 TLF3_statements[3].plan
+#define TLF3_1 (*TLF3_statements[0].plan)
+#define TLF3_2 (*TLF3_statements[1].plan)
+#define TLF3_3 (*TLF3_statements[2].plan)
+#define TLF3_4 (*TLF3_statements[3].plan)
 
-#define TLF4_1 TLF4_statements[0].plan
-#define TLF4_2 TLF4_statements[1].plan
+#define TLF4_1 (*TLF4_statements[0].plan)
+#define TLF4_2 (*TLF4_statements[1].plan)
 
 static MemoryContext TLF1_savedcxt = NULL;
 static MemoryContext TLF2_savedcxt = NULL;
@@ -400,9 +399,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 
 	int i, j;
 
-	int ndim, nitems;
-	int *dim;
-	long *trade_id;	
+	long *trade_id;
 
 	char **values = NULL;
 	enum tlf1 {
@@ -438,23 +435,29 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
+
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
+		 *
+		 * XXX On what basis do we determine the size of the arrays, in
+		 * particular for i_cash_transaction_name and
+		 * i_trade_history_status_id?
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
-		
+
 		values[i_bid_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_amount] = (char *) palloc(((VALUE_T_LEN +
 				1) * max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_dts] = (char *) palloc(((MYMAXDATELEN + 1) *
+		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) *
-				max_trades + 2) * sizeof(char));
-		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) *
+		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 10) *
+				max_trades + 20) * sizeof(char));
+		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 10) *
 				max_trades + 2) * sizeof(char));
 		values[i_is_cash] = (char *) palloc(((BOOLEAN_LEN + 1) * max_trades +
 				2) * sizeof(char));
@@ -463,24 +466,16 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		values[i_num_found] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_settlement_amount] = (char *) palloc(((VALUE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_settlement_cash_due_date] = (char *) palloc(((MYMAXDATELEN +
+		values[i_settlement_cash_due_date] = (char *) palloc(((MAXDATELEN +
 				1) * max_trades + 2) * sizeof(char));
 		values[i_settlement_cash_type] = (char *) palloc(((SE_CASH_TYPE_LEN +
 				1) * max_trades + 2) * sizeof(char));
-		values[i_trade_history_dts] = (char *) palloc((((MYMAXDATELEN + 1) *
+		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 1) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
-		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 3) *
-				max_trades + 3) * 3 + 2) * sizeof(char));
+		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 10) *
+				max_trades + 30) * 3 + 2) * sizeof(char));
 		values[i_trade_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
-
-		/*
-		 * This might be overkill since we always expect single dimensions
-		 * arrays.  This is not necessary if we trust the input.
-		 */
-		ndim = ARR_NDIM(trade_id_p);
-		dim = ARR_DIMS(trade_id_p);
-		nitems = ArrayGetNItems(ndim, dim);
 
 		/*
 		 * FIXME: nitems must be the same as max_trades, otherwise there must
@@ -498,7 +493,8 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF1_statements);
 #ifdef DEBUG
 		dump_tlf1_inputs(max_trades, trade_id_p);
@@ -732,7 +728,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		HeapTuple tuple;
 		Datum result;
 
-#ifdef DEBUG                                                                    
+#ifdef DEBUG
 		for (i = 0; i < 14; i++) {
 			elog(NOTICE, "TLF1 OUT: %d %s", i, values[i]);
 		}
@@ -782,13 +778,13 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		struct pg_tm tt, *tm = &tt;
 		fsec_t fsec;
 		char *tzn = NULL;
-		char end_trade_dts[MYMAXDATELEN + 1];
-		char start_trade_dts[MYMAXDATELEN + 1];
+		char end_trade_dts[MAXDATELEN + 1];
+		char start_trade_dts[MAXDATELEN + 1];
 #ifdef DEBUG
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
@@ -801,13 +797,22 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 
 		char *is_cash_str;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, end_trade_dts);
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, start_trade_dts);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF2 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF2 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tlf2_inputs(acct_id, end_trade_dts, max_trades, start_trade_dts);
@@ -823,7 +828,7 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 				max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_amount] = (char *) palloc(((VALUE_T_LEN +
 				1) * max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_dts] = (char *) palloc(((MYMAXDATELEN + 1) *
+		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN +
 				3) * max_trades + 2) * sizeof(char));
@@ -834,11 +839,11 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		values[i_num_found] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_settlement_amount] = (char *) palloc(((VALUE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_settlement_cash_due_date] = (char *) palloc(((MYMAXDATELEN +
+		values[i_settlement_cash_due_date] = (char *) palloc(((MAXDATELEN +
 				1) * max_trades + 2) * sizeof(char));
 		values[i_settlement_cash_type] = (char *) palloc(((SE_CASH_TYPE_LEN +
 				1) * max_trades + 2) * sizeof(char));
-		values[i_trade_history_dts] = (char *) palloc((((MYMAXDATELEN + 1) *
+		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 1) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
 		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN +
 				3) * max_trades + 3) * 3 + 2) * sizeof(char));
@@ -854,7 +859,8 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF2_statements);
 
 #ifdef DEBUG
@@ -1125,13 +1131,13 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 		struct pg_tm tt, *tm = &tt;
 		fsec_t fsec;
 		char *tzn = NULL;
-		char end_trade_dts[MYMAXDATELEN + 1];
-		char start_trade_dts[MYMAXDATELEN + 1];
+		char end_trade_dts[MAXDATELEN + 1];
+		char start_trade_dts[MAXDATELEN + 1];
 #ifdef DEBUG
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = {' ', ' ', ' ', ' ' };
+		char nulls[4];
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
@@ -1144,16 +1150,26 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 
 		char *is_cash_str;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, end_trade_dts);
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF3 end_trade_dts_ts timestamp out of range")));
 
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, start_trade_dts);
-		}
-		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(symbol_p))));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF3 start_trade_dts_ts timestamp out of range")));
+
+		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
+				PointerGetDatum(symbol_p))), sizeof(symbol));
+		symbol[S_SYMB_LEN] = '\0';
 
 #ifdef DEBUG
 		 dump_tlf3_inputs(end_trade_dts, max_acct_id, max_trades,
@@ -1170,7 +1186,7 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 				2) * sizeof(char));
 		values[i_cash_transaction_amount] = (char *) palloc(((VALUE_T_LEN +
 				1) * max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_dts] = (char *) palloc(((MYMAXDATELEN + 1) *
+		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) *
 				max_trades + 2) * sizeof(char));
@@ -1185,13 +1201,13 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 				2) * sizeof(char));
 		values[i_settlement_amount] = (char *) palloc(((VALUE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_settlement_cash_due_date] = (char *) palloc(((MYMAXDATELEN +
+		values[i_settlement_cash_due_date] = (char *) palloc(((MAXDATELEN +
 				1) * max_trades + 2) * sizeof(char));
 		values[i_settlement_cash_type] = (char *) palloc(((SE_CASH_TYPE_LEN +
 				3) * max_trades + 2) * sizeof(char));
-		values[i_trade_dts] = (char *) palloc(((MYMAXDATELEN * 3 + 4) *
+		values[i_trade_dts] = (char *) palloc(((MAXDATELEN * 3 + 4) *
 				max_trades + max_trades + 2) * sizeof(char));
-		values[i_trade_history_dts] = (char *) palloc(((MYMAXDATELEN * 3 + 4) *
+		values[i_trade_history_dts] = (char *) palloc(((MAXDATELEN * 3 + 4) *
 				max_trades + max_trades + 2) * sizeof(char));
 		values[i_trade_history_status_id] = (char *) palloc(((ST_ID_LEN + 3) *
 				max_trades * 3 + 2) * sizeof(char));
@@ -1207,7 +1223,8 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF3_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTLF3_1, symbol, start_trade_dts, end_trade_dts,
@@ -1474,24 +1491,28 @@ Datum TradeLookupFrame4(PG_FUNCTION_ARGS)
 		struct pg_tm tt, *tm = &tt;
 		fsec_t fsec;
 		char *tzn = NULL;
-		char start_trade_dts[MYMAXDATELEN + 1];
+		char start_trade_dts[MAXDATELEN + 1];
 #ifdef DEBUG
 		char sql[2048];
 #endif
 		int num_found_count = 0;
 		int num_trades_found_count = 0;
 		Datum args[2];
-		char nulls[2] = {' ', ' ' };
+		char nulls[2];
 
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple = NULL;
 
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, start_trade_dts);
+		memset(nulls, 0, sizeof(nulls));
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF4 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		 dump_tlf4_inputs(acct_id, start_trade_dts);
@@ -1521,7 +1542,8 @@ Datum TradeLookupFrame4(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF4_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF4_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTLF4_1, acct_id, start_trade_dts);

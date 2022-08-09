@@ -134,28 +134,28 @@ PG_MODULE_MAGIC;
 #define SQLTUF3_6 SQLTUF2_6
 #endif /* End DEBUG */
 
-#define TUF1_1  TUF1_statements[0].plan
-#define TUF1_2a TUF1_statements[1].plan
-#define TUF1_2b TUF1_statements[2].plan
-#define TUF1_3  TUF1_statements[3].plan
-#define TUF1_4  TUF1_statements[4].plan
-#define TUF1_5  TUF1_statements[5].plan
-#define TUF1_6  TUF1_statements[6].plan
-#define TUF1_7  TUF1_statements[7].plan
+#define TUF1_1  (*TUF1_statements[0].plan)
+#define TUF1_2a (*TUF1_statements[1].plan)
+#define TUF1_2b (*TUF1_statements[2].plan)
+#define TUF1_3  (*TUF1_statements[3].plan)
+#define TUF1_4  (*TUF1_statements[4].plan)
+#define TUF1_5  (*TUF1_statements[5].plan)
+#define TUF1_6  (*TUF1_statements[6].plan)
+#define TUF1_7  (*TUF1_statements[7].plan)
 
-#define TUF2_1  TUF2_statements[0].plan
-#define TUF2_2  TUF2_statements[1].plan
-#define TUF2_3  TUF2_statements[2].plan
-#define TUF2_4  TUF2_statements[3].plan
-#define TUF2_5  TUF2_statements[4].plan
-#define TUF2_6  TUF2_statements[5].plan
+#define TUF2_1  (*TUF2_statements[0].plan)
+#define TUF2_2  (*TUF2_statements[1].plan)
+#define TUF2_3  (*TUF2_statements[2].plan)
+#define TUF2_4  (*TUF2_statements[3].plan)
+#define TUF2_5  (*TUF2_statements[4].plan)
+#define TUF2_6  (*TUF2_statements[5].plan)
 
-#define TUF3_1  TUF3_statements[0].plan
-#define TUF3_2  TUF3_statements[1].plan
-#define TUF3_3  TUF3_statements[2].plan
-#define TUF3_4  TUF3_statements[3].plan
-#define TUF3_5  TUF3_statements[4].plan
-#define TUF3_6  TUF3_statements[5].plan
+#define TUF3_1  (*TUF3_statements[0].plan)
+#define TUF3_2  (*TUF3_statements[1].plan)
+#define TUF3_3  (*TUF3_statements[2].plan)
+#define TUF3_4  (*TUF3_statements[3].plan)
+#define TUF3_5  (*TUF3_statements[4].plan)
+#define TUF3_6  (*TUF3_statements[5].plan)
 
 static MemoryContext TUF1_savedcxt = NULL;
 static MemoryContext TUF2_savedcxt = NULL;
@@ -452,8 +452,6 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		bool typbyval;
 		char typalign;
 
-		int ndim, nitems;
-		int *dim;
 		long *trade_id;
 
 		int ret;
@@ -464,7 +462,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[2];
-		char nulls[2] = { ' ', ' ' };
+		char nulls[2];
 
 		int num_found = max_trades;
 		int num_updated = 0;
@@ -473,10 +471,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		int num_updated7 = 0;
 		int num_cash = 0;
 
-		ndim = ARR_NDIM(trade_id_p);
-		dim = ARR_DIMS(trade_id_p);
-		nitems = ArrayGetNItems(ndim, dim);
-
+		memset(nulls, 0, sizeof(nulls));
 		get_typlenbyvalalign(ARR_ELEMTYPE(trade_id_p), &typlen, &typbyval,
 				&typalign);
 		trade_id = (long *) ARR_DATA_PTR(trade_id_p);
@@ -529,7 +524,8 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TUF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF1_statements);
 
 		strcpy(values[i_bid_price], "{");
@@ -841,7 +837,8 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
-		if (TUF1_savedcxt) MemoryContextSwitchTo(TUF1_savedcxt);
+		if (TUF1_savedcxt)
+			MemoryContextSwitchTo(TUF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -888,7 +885,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 
 		char end_trade_dts[MAXDATELEN + 1];
 		char start_trade_dts[MAXDATELEN + 1];
@@ -897,13 +894,22 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		int num_updated = 0;
 		int num_cash = 0;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, end_trade_dts);
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) ==
-				0) {
-			EncodeDateTimeM(tm, fsec, tzn, start_trade_dts);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF2 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF2 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tuf2_inputs(acct_id, end_trade_dts, max_trades, max_updates,
@@ -915,33 +921,38 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 * Don't forget to factor in commas (,) and braces ({}) for the arrays.
+		 *
+		 * XXX Valgrind complained about i_trade_history_dts, so the buffer
+		 * sizes were increased in a scattergun fashion.  This was enough to
+		 * get Valgrind to stop complaining, but I still don't understand how
+		 * to size these buffers correctly.
 		 */
 		values = (char **) palloc(sizeof(char *) * 15);
 		values[i_bid_price] =
-				(char *) palloc(((S_PRICE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((S_PRICE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_amount] =
-				(char *) palloc(((VALUE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((VALUE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_dts] =
-				(char *) palloc(((MAXDATELEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((MAXDATELEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_name] =
-				(char *) palloc(((CT_NAME_LEN + 3) * 20 + 2) * sizeof(char));
+				(char *) palloc(((CT_NAME_LEN + 3) * 40 + 2) * sizeof(char));
 		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) * 20 +
 				2) * sizeof(char));
 		values[i_is_cash] =
-				(char *) palloc(((SMALLINT_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((SMALLINT_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_num_found] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_num_updated] =
 				(char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_settlement_amount] =
-				(char *) palloc(((VALUE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((VALUE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_settlement_cash_due_date] =
-				(char *) palloc(((MAXDATELEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((MAXDATELEN + 1) * 40 + 2) * sizeof(char));
 		values[i_settlement_cash_type] = (char *) palloc(((SE_CASH_TYPE_LEN +
 				3) * 20 + 2) * sizeof(char));
 		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 2) * 3
-				+ 2) * 20 + 5) * sizeof(char));
+				+ 2) * 40 + 5) * sizeof(char));
 		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN +
-				2) * 3 + 2) * 20 + 5) * sizeof(char));
+				2) * 3 + 2) * 40 + 5) * sizeof(char));
 		values[i_trade_list] =
 				(char *) palloc(((BIGINT_LEN + 1) * 20 + 2) * sizeof(char));
 		values[i_trade_price] =
@@ -953,8 +964,8 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 
 		/* switch to memory context appropriate for multiple function calls */
 		TUF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF2_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTUF2_1, acct_id, start_trade_dts, end_trade_dts,
@@ -1301,25 +1312,34 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 
 		char symbol[S_SYMB_LEN + 1];
 		char end_trade_dts[MAXDATELEN + 1];
 		char start_trade_dts[MAXDATELEN + 1];
 
-		int num_found;
+		int num_found = 0;
 		int num_updated = 0;
 		int num_cash = 0;
 
+		memset(nulls, 0, sizeof(nulls));
 		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-			EncodeDateTimeM(tm, fsec, tzn, end_trade_dts);
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) ==
-				0) {
-			EncodeDateTimeM(tm, fsec, tzn, start_trade_dts);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF3 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
+			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF3 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tuf3_inputs(end_trade_dts, max_acct_id, max_trades, max_updates,
@@ -1380,7 +1400,8 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TUF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF3_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTUF3_1, symbol, start_trade_dts, end_trade_dts,
