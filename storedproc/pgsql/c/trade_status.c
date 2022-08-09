@@ -47,8 +47,8 @@ PG_MODULE_MAGIC;
 		"  AND b_id = ca_b_id"
 #endif /* End DEBUG */
 
-#define TSF1_1 TSF1_statements[0].plan
-#define TSF1_2 TSF1_statements[1].plan
+#define TSF1_1 (*TSF1_statements[0].plan)
+#define TSF1_2 (*TSF1_statements[1].plan)
 
 static MemoryContext TSF1_savedcxt = NULL;
 
@@ -128,12 +128,13 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
 		values[i_charge] =
 				(char *) palloc((VALUE_T_LEN + 1) * sizeof(char) * 50);
@@ -172,7 +173,8 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TSF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TSF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTSF1_1, acct_id);
@@ -187,7 +189,7 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 			FAIL_FRAME_SET(&funcctx->max_calls, TSF1_statements[0].sql);
 			dump_tsf1_inputs(acct_id);
 		}
-		sprintf(values[i_num_found], "%" PRId64, SPI_processed);
+		sprintf(values[i_num_found], "%ld", SPI_processed);
 		strcpy(values[i_trade_id], "{");
 		strcpy(values[i_trade_dts], "{");
 		strcpy(values[i_status_name], "{");
