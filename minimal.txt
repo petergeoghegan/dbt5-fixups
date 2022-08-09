@@ -1,0 +1,33 @@
+Per README:
+
+Comments regarding database scale:
+
+The minimum "valid" configuration is supposed to be 5000 customer with 300
+initial trade days and a scale factor of 500.  An example to build this would
+be:
+
+	dbt5-pgsql-build-db -c 5000 -s 500 -w 300
+
+So for me:
+
+pg@bat:~/code/dbt5 peter-monkeys-around-2022$ source env-vars
+pg@bat:~/code/dbt5 peter-monkeys-around-2022$ psql -c "drop database dbt5"; dbt5-pgsql-build-db -c 5000 -s 500 -w 300
+
+EGen v1.12.0
+
+Using the following settings.
+
+	Load Type:		Custom
+	Loader Parms:
+	In Directory:		flat_in/
+	Start From Customer:	1
+	Customer Count:		5000
+	Total customers:	5000
+	Load Unit:		1000
+	Scale Factor:		500
+	Initial Trade Days:	300
+	Caching Enabled:	true
+
+To actually run the test:
+pg@bat:~/code/dbt5 peter-monkeys-around-2022$ source env-vars
+pg@bat:~/code/dbt5 peter-monkeys-around-2022$ rm -rf /tmp/results; dbt5-run-workload -a pgsql -c 5000 -d 3600 -u 100 -f 500 -w 300 -n dbt5 -o /tmp/results
