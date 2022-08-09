@@ -93,11 +93,11 @@ PG_MODULE_MAGIC;
 		"LIMIT 30"
 #endif /* End DEBUG */
 
-#define CPF1_1 CPF1_statements[0].plan
-#define CPF1_2 CPF1_statements[1].plan
-#define CPF1_3 CPF1_statements[2].plan
+#define CPF1_1 (*CPF1_statements[0].plan)
+#define CPF1_2 (*CPF1_statements[1].plan)
+#define CPF1_3 (*CPF1_statements[2].plan)
 
-#define CPF2_1 CPF2_statements[0].plan
+#define CPF2_1 (*CPF2_statements[0].plan)
 
 static MemoryContext CPF1_savedcxt = NULL;
 static MemoryContext CPF2_savedcxt = NULL;
@@ -243,7 +243,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		char sql[1024];
 #endif /* DEBUG */
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple;
@@ -253,6 +253,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 27);
 		values[i_cust_id] = (char *) palloc((IDENT_T_LEN + 1) * sizeof(char));
 		values[i_acct_len] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
@@ -269,7 +270,8 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		dump_cpf1_inputs(cust_id, tax_id_p);
 #endif /* DEBUG */
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(CPF1_statements);
 		if (cust_id == 0) {
 #ifdef DEBUG
@@ -301,7 +303,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		args[0] = Int64GetDatum(cust_id);
 		ret = SPI_execute_plan(CPF1_2, args, nulls, true, 0);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned from CPF1_2.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned from CPF1_2.", SPI_processed);
 #endif /* DEBUG */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			tupdesc = SPI_tuptable->tupdesc;
@@ -342,7 +344,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		ret = SPI_execute_plan(CPF1_3, args, nulls, true, 0);
 		sprintf(values[i_acct_len], "%" PRId64, SPI_processed);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned from CPF1_3.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned from CPF1_3.", SPI_processed);
 #endif /* DEBUG */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			/* Total number of tuples to be returned. */
@@ -464,7 +466,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 
 		int ret;
 		Datum args[1];
-		char nulls[] = { ' ' };
+		char nulls[1];
 #ifdef DEBUG
 		char sql[1024];
 		dump_cpf2_inputs(acct_id);
@@ -475,6 +477,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 6);
 		values[i_hist_len] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 
@@ -485,7 +488,8 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		/* Switch to memory context appropriate for multiple function calls. */
 		CPF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(CPF2_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLCPF2_1, acct_id);
@@ -495,7 +499,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		ret = SPI_execute_plan(CPF2_1, args, nulls, true, 0);
 		sprintf(values[i_hist_len], "%" PRId64, SPI_processed);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned.", SPI_processed);
 #endif /* DEBUG */
 		/* Should return 1 to rows. */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
@@ -562,7 +566,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 			strcat(values[i_trade_status], "}");
 		} else {
 			if (ret == SPI_OK_SELECT && SPI_processed == 0) {
-				elog(WARNING, "Query CPF2_1 should return 10-30 rows.");
+				elog(WARNING, "DBT5: Query CPF2_1 should return 10-30 rows.");
 			}
 			dump_cpf2_inputs(acct_id);
 			FAIL_FRAME_SET(&funcctx->max_calls, CPF2_statements[1].sql);
