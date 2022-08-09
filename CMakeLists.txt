@@ -68,8 +68,9 @@ IF (PG_CONFIG_FOUND)
 
 	SET(DBCFLAGS "-I${PG_INCLUDEDIR}")
 	MESSAGE(STATUS "DBCFLAGS: ${DBCFLAGS}")
-	SET(LIBPQ_LDFLAGS "-L${PG_LIBDIR} -lpq")
+	SET(LIBPQ_LDFLAGS "-L${PG_LIBDIR} -lpq -lm -lpgcommon -lpgport")
 	MESSAGE(STATUS "c plus cplus link flags LIBPQ_LDFLAGS: ${LIBPQ_LDFLAGS}")
+	link_directories(${PG_LIBDIR})
 
 	SET(DB_SCRIPTS scripts/pgsql/dbt5-pgsql-start-db
 				   scripts/pgsql/dbt5-pgsql-create-indexes
@@ -217,13 +218,13 @@ ADD_EXECUTABLE(${DBT5_TEST_TXN}
 # Set linker flags.
 #
 
-target_link_libraries (${DBT5_BROKERAGE_HOUSE} -lpthread)
+target_link_libraries (${DBT5_BROKERAGE_HOUSE} -lpthread ${LIBPQ_LDFLAGS})
 target_link_libraries (${DBT5_DRIVER} -lpthread)
 target_link_libraries (${DBT5_MARKET_EXCHANGE} -lpthread)
-target_link_libraries (${DBT5_TEST_TXN} -lpthread)
+target_link_libraries (${DBT5_TEST_TXN} -lpthread ${LIBPQ_LDFLAGS})
 
-target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
-target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
+# target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
+# target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
 
 #
 # Set compiler flags.
