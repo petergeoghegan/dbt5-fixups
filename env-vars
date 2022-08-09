@@ -1,0 +1,6 @@
+export EGENDIR=~/code/dbt5/egen
+export DBT5DBNAME=dbt5
+export DBT5PGDATA=/mnt/970pro/patch/data
+
+# No tablespace mount points needed:
+#export DBT5TSDIR=/mnt/dbt5
