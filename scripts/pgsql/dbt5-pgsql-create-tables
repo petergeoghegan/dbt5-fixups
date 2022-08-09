@@ -255,15 +255,15 @@ psql ${PORTARG} -e ${DBNAMEARG} \
 psql ${PORTARG} -e ${DBNAMEARG} \
 		-c "CREATE DOMAIN TRADE_T AS BIGINT NULL;" || exit 1
 psql ${PORTARG} -e ${DBNAMEARG} \
-		-c "CREATE DOMAIN BALANCE_T AS NUMERIC(12,2);" || exit 1
+		-c "CREATE DOMAIN BALANCE_T AS NUMERIC;" || exit 1
 psql ${PORTARG} -e ${DBNAMEARG} \
-		-c "CREATE DOMAIN S_PRICE_T AS NUMERIC(8,2);" || exit 1
+		-c "CREATE DOMAIN S_PRICE_T AS NUMERIC" || exit 1
 psql ${PORTARG} -e ${DBNAMEARG} \
 		-c "CREATE DOMAIN S_QTY_T AS INTEGER NULL;" || exit 1
 psql ${PORTARG} -e ${DBNAMEARG} \
-		-c "CREATE DOMAIN VALUE_T AS NUMERIC(10,2) NULL;" || exit 1
+		-c "CREATE DOMAIN VALUE_T AS NUMERIC NULL;" || exit 1
 psql ${PORTARG} -e ${DBNAMEARG} \
-		-c "CREATE DOMAIN FIN_AGG_T AS NUMERIC(15,2) NOT NULL;" || exit 1
+		-c "CREATE DOMAIN FIN_AGG_T AS NUMERIC NOT NULL;" || exit 1
 
 # Note: when the specification states CHAR(n), the implementer can choose 
 #   whether it pads strings with spaces to always have the maximum length,
