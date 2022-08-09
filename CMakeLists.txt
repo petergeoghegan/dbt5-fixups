@@ -46,35 +46,54 @@ SET(BH src/BrokerageHouse)
 SET(CE src/Driver)
 SET(ME src/MarketExchange)
 
-find_package(PkgConfig REQUIRED)
+#
+# Create PostgreSQL specific configuration.
+#
 
-pkg_check_modules(LIBPQ libpq)
-if (LIBPQ_FOUND)
-    set (DBCFLAGS "${DBCFLAGS} -DHAVE_LIBPQ ${LIBPQ_CFLAGS}")
+FIND_PROGRAM(PG_CONFIG pg_config)
 
-    set (DB_SOURCE
-         ${DB_SOURCE}
-         ${TXN}/pgsql/DBConnection.cpp
-    )
+IF (PG_CONFIG)
+   SET(PG_CONFIG_FOUND TRUE)
+ENDIF (PG_CONFIG)
 
-    set (DB_SCRIPTS
-         ${DB_SCRIPTS}
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-start-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-create-indexes
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-create-tables
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-drop-tables
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-restore-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-load-stored-procs
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-backup-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-db-plans
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-drop-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-check-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-db-stat
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-stop-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-create-db
-         ${CMAKE_SOURCE_DIR}/scripts/pgsql/dbt5-pgsql-build-db
-    )
-endif (LIBPQ_FOUND)
+IF (PG_CONFIG_FOUND)
+	MESSAGE(STATUS "Found pg_config for PostgreSQL: ${PG_CONFIG}")
+	EXECUTE_PROCESS(COMMAND ${PG_CONFIG} --includedir OUTPUT_VARIABLE
+			PG_INCLUDEDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+	EXECUTE_PROCESS(COMMAND ${PG_CONFIG} --libdir OUTPUT_VARIABLE
+			PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+	# EXECUTE_PROCESS(COMMAND ${PG_CONFIG} --pkglibdir OUTPUT_VARIABLE
+	# 		PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+	# MESSAGE(STATUS "BBBBB: ${OUTPUT_VARIABLE} - ${PG_INCLUDEDIR} - ${OUTPUT_STRIP_TRAILING_WHITESPACE} - ${PG_LIBDIR}")
+
+	SET(DBCFLAGS "-I${PG_INCLUDEDIR}")
+	MESSAGE(STATUS "DBCFLAGS: ${DBCFLAGS}")
+	SET(LIBPQ_LDFLAGS "-L${PG_LIBDIR} -lpq -lm -lpgcommon -lpgport")
+	MESSAGE(STATUS "c plus cplus link flags LIBPQ_LDFLAGS: ${LIBPQ_LDFLAGS}")
+	link_directories(${PG_LIBDIR})
+
+	SET(DB_SCRIPTS scripts/pgsql/dbt5-pgsql-start-db
+				   scripts/pgsql/dbt5-pgsql-create-indexes
+				   scripts/pgsql/dbt5-pgsql-create-tables
+				   scripts/pgsql/dbt5-pgsql-drop-tables
+				   scripts/pgsql/dbt5-pgsql-restore-db
+				   scripts/pgsql/dbt5-pgsql-load-stored-procs
+				   scripts/pgsql/dbt5-pgsql-backup-db
+				   scripts/pgsql/dbt5-pgsql-db-plans
+				   scripts/pgsql/dbt5-pgsql-drop-db
+				   scripts/pgsql/dbt5-pgsql-check-db
+				   scripts/pgsql/dbt5-pgsql-db-stat
+				   scripts/pgsql/dbt5-pgsql-stop-db
+				   scripts/pgsql/dbt5-pgsql-create-db
+				   scripts/pgsql/dbt5-pgsql-build-db)
+
+	set (DB_SOURCE
+		 ${DB_SOURCE}
+		 ${TXN}/pgsql/DBConnection.cpp
+	)
+
+ENDIF (PG_CONFIG_FOUND)
+
 
 #
 # Defining common groups of source files.
@@ -199,15 +218,13 @@ ADD_EXECUTABLE(${DBT5_TEST_TXN}
 # Set linker flags.
 #
 
-target_link_libraries (${DBT5_BROKERAGE_HOUSE} -lpthread)
+target_link_libraries (${DBT5_BROKERAGE_HOUSE} -lpthread ${LIBPQ_LDFLAGS})
 target_link_libraries (${DBT5_DRIVER} -lpthread)
 target_link_libraries (${DBT5_MARKET_EXCHANGE} -lpthread)
-target_link_libraries (${DBT5_TEST_TXN} -lpthread)
+target_link_libraries (${DBT5_TEST_TXN} -lpthread ${LIBPQ_LDFLAGS})
 
-if (LIBPQ_FOUND)
-    target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
-    target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
-endif (LIBPQ_FOUND)
+# target_link_libraries (${DBT5_BROKERAGE_HOUSE} ${LIBPQ_LDFLAGS})
+# target_link_libraries (${DBT5_TEST_TXN} ${LIBPQ_LDFLAGS})
 
 #
 # Set compiler flags.
@@ -218,6 +235,12 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${EGENINC} ${LFS_CFLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_HOME_DIRECTORY}/src/include")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_FORMAT_MACROS")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_CONSTANT_MACROS")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwrapv")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 
 set_source_files_properties(
     ${DB_SOURCE}

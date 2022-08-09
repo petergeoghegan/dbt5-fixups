@@ -8,6 +8,8 @@
 #               2010 Mark Wong
 #
 
+export PSQLRC=/dev/null
+
 if [ -z ${DBT5PGDATA} ]; then
 	echo "DBT5PGDATA not defined."
 	exit 1
