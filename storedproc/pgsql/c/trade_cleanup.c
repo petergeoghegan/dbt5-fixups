@@ -57,12 +57,12 @@ PG_MODULE_MAGIC;
 		"VALUES (%s, now(), '%s')"
 #endif /* End DEBUG */
 
-#define TCF1_1 TCF1_statements[0].plan
-#define TCF1_2 TCF1_statements[1].plan
-#define TCF1_3 TCF1_statements[2].plan
-#define TCF1_4 TCF1_statements[3].plan
-#define TCF1_5 TCF1_statements[4].plan
-#define TCF1_6 TCF1_statements[5].plan
+#define TCF1_1 (*TCF1_statements[0].plan)
+#define TCF1_2 (*TCF1_statements[1].plan)
+#define TCF1_3 (*TCF1_statements[2].plan)
+#define TCF1_4 (*TCF1_statements[3].plan)
+#define TCF1_5 (*TCF1_statements[4].plan)
+#define TCF1_6 (*TCF1_statements[5].plan)
 
 static cached_statement TCF1_statements[] = {
 
@@ -160,8 +160,9 @@ Datum TradeCleanupFrame1(PG_FUNCTION_ARGS)
 	int i, n;
 	char *tr_t_id = NULL;
 	Datum args[2];
-	char nulls[] = { ' ', ' ' };
+	char nulls[2];
 
+	memset(nulls, 0, sizeof(nulls));
 	strcpy(st_canceled_id, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(st_canceled_id_p))));
 	strcpy(st_pending_id, DatumGetCString(DirectFunctionCall1(textout,
@@ -173,7 +174,8 @@ Datum TradeCleanupFrame1(PG_FUNCTION_ARGS)
 	dump_tcf1_inputs(st_canceled_id, st_pending_id, st_submitted_id, trade_id);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TCF1_statements);
 #ifdef DEBUG
 	elog(NOTICE, "SQL\n%s", SQLTCF1_1);
