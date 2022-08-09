@@ -79,11 +79,11 @@ typedef int16 NumericDigit;
 		"VALUES (%s, now(), '%s');"
 #endif /* End DEBUG */
 
-#define MFF1_1 MFF1_statements[0].plan
-#define MFF1_2 MFF1_statements[1].plan
-#define MFF1_3 MFF1_statements[2].plan
-#define MFF1_4 MFF1_statements[3].plan
-#define MFF1_5 MFF1_statements[4].plan
+#define MFF1_1 (*MFF1_statements[0].plan)
+#define MFF1_2 (*MFF1_statements[1].plan)
+#define MFF1_3 (*MFF1_statements[2].plan)
+#define MFF1_4 (*MFF1_statements[3].plan)
+#define MFF1_5 (*MFF1_statements[4].plan)
 
 static MemoryContext MFF1_savedcxt = NULL;
 
@@ -274,8 +274,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[7];
-		char nulls[] = { ' ', ' ', ' ', ' ', ' ',
-						' ', ' ' };
+		char nulls[7];
 		char price_quote[S_PRICE_T_LEN + 1];
 		char status_submitted[ST_ID_LEN + 1];
 		char symbol[S_SYMB_LEN + 1];
@@ -292,6 +291,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 7);
 		values[i_num_updated] =
 				(char *) palloc((INTEGER_LEN + 1) * sizeof(char));
@@ -349,7 +349,8 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		MFF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(MFF1_statements);
 
 		strcpy(values[i_symbol], "{");
@@ -414,7 +415,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 				continue;
 			}
 #ifdef DEBUG
-			elog(NOTICE, "%d row(s) returned", SPI_processed);
+			elog(NOTICE, "%ld row(s) returned", SPI_processed);
 #endif /* DEBUG */
 
 			tupdesc = SPI_tuptable->tupdesc;
