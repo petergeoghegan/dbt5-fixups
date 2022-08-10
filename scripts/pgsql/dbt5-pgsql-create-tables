@@ -671,4 +671,20 @@ CREATE TABLE zip_code (
     ${TS_ZIP_CODE};
 " || exit 1
 
+# Unset these when VACUUM FREEZE is done later:
+psql ${PORTARG} -e ${DBNAMEARG} -c "
+    ALTER TABLE trade SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE trade_history SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE cash_transaction SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE holding_history SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE settlement SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE daily_market SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE holding SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE watch_item SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE holding_summary SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE financial SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE account_permission SET (autovacuum_freeze_min_age=0);
+    ALTER TABLE customer_account SET (autovacuum_freeze_min_age=0);
+" || exit 1
+
 exit 0
