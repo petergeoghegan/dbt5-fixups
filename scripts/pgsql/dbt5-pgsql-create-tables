@@ -448,7 +448,7 @@ CREATE TABLE trade (
     t_exec_name VARCHAR(64) NOT NULL,
     t_trade_price S_PRICE_T,
     t_chrg VALUE_T NOT NULL CHECK (t_chrg >= 0),
-    t_comm VALUE_T NOT NULL CHECK (t_comm >= 0),
+    t_comm VALUE_T NOT NULL,
     t_tax VALUE_T NOT NULL CHECK (t_tax >= 0),
     t_lifo BOOLEAN NOT NULL)
     ${TS_TRADE};
