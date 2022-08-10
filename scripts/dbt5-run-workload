@@ -428,12 +428,12 @@ else
 fi
 
 # Restart database.
-${DB_COMMAND} dbt5-${DBMS}-stop-db
-if [ ! "x${DB_HOSTNAME}" = "x" ] && [ ! "x${DB_HOSTNAME}" = "xlocalhost" ]; then
-	${DB_COMMAND} "dbt5-${DBMS}-start-db -p \"${DB_PARAMS}\" -o ${DB_OUTPUT_DIR}" || exit 1
-else
-	dbt5-${DBMS}-start-db -p "${DB_PARAMS}" -o ${DB_OUTPUT_DIR} || exit 1
-fi
+# ${DB_COMMAND} dbt5-${DBMS}-stop-db
+# if [ ! "x${DB_HOSTNAME}" = "x" ] && [ ! "x${DB_HOSTNAME}" = "xlocalhost" ]; then
+# 	${DB_COMMAND} "dbt5-${DBMS}-start-db -p \"${DB_PARAMS}\" -o ${DB_OUTPUT_DIR}" || exit 1
+# else
+# 	dbt5-${DBMS}-start-db -p "${DB_PARAMS}" -o ${DB_OUTPUT_DIR} || exit 1
+# fi
 
 echo ""
 echo "************************************************************************"
