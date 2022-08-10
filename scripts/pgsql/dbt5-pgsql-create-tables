@@ -321,6 +321,7 @@ CREATE TABLE customer_account (
     ca_name VARCHAR(50),
     ca_tax_st SMALLINT NOT NULL,
     ca_bal BALANCE_T NOT NULL)
+    WITH (fillfactor=90)
     ${TS_CUSTOMER_ACCOUNT};
 " || exit 1
 
@@ -341,6 +342,7 @@ CREATE TABLE holding (
     h_dts TIMESTAMP NOT NULL,
     h_price S_PRICE_T NOT NULL CHECK (h_price > 0),
     h_qty S_QTY_T NOT NULL)
+    WITH (fillfactor=90)
     ${TS_HOLDING};
 " || exit 1
 
@@ -360,6 +362,7 @@ CREATE TABLE holding_summary (
     hs_ca_id IDENT_T NOT NULL,
     hs_s_symb VARCHAR(15) NOT NULL,
     hs_qty S_QTY_T NOT NULL)
+    WITH (fillfactor=90)
     ${TS_HOLDING_SUMMARY};
 " || exit 1
 
@@ -389,6 +392,7 @@ CREATE TABLE broker (
     b_name VARCHAR(100) NOT NULL,
     b_num_trades INTEGER NOT NULL,
     b_comm_total BALANCE_T NOT NULL)
+    WITH (fillfactor=95)
     ${TS_BROKER};
 " || exit 1
 
@@ -399,6 +403,7 @@ CREATE TABLE cash_transaction (
     ct_dts TIMESTAMP NOT NULL,
     ct_amt VALUE_T NOT NULL,
     ct_name VARCHAR(100))
+    WITH (fillfactor=90)
     ${TS_CASH_TRANSACTION};
 " || exit 1
 
@@ -430,6 +435,7 @@ CREATE TABLE settlement (
     se_cash_type VARCHAR(40) NOT NULL,
     se_cash_due_date DATE NOT NULL,
     se_amt VALUE_T NOT NULL)
+    WITH (fillfactor=95)
     ${TS_SETTLEMENT};
 " || exit 1
 
@@ -451,6 +457,7 @@ CREATE TABLE trade (
     t_comm VALUE_T NOT NULL,
     t_tax VALUE_T NOT NULL CHECK (t_tax >= 0),
     t_lifo BOOLEAN NOT NULL)
+    WITH (fillfactor=95)
     ${TS_TRADE};
 " || exit 1
 
@@ -573,6 +580,7 @@ CREATE TABLE last_trade (
     lt_price S_PRICE_T NOT NULL,
     lt_open_price S_PRICE_T NOT NULL,
     lt_vol S_COUNT_T)
+    WITH (fillfactor=90)
     ${TS_LAST_TRADE};
 " || exit 1
 
