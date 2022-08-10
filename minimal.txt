@@ -28,6 +28,7 @@ Using the following settings.
 	Initial Trade Days:	300
 	Caching Enabled:	true
 
-To actually run the test:
+To actually run the benchmark proper, with 100 clients (-u 100):
+
 pg@bat:~/code/dbt5 peter-monkeys-around-2022$ source env-vars
 pg@bat:~/code/dbt5 peter-monkeys-around-2022$ rm -rf /tmp/results; dbt5-run-workload -a pgsql -c 5000 -t 5000 -d 3600 -u 100 -f 500 -w 300 -n dbt5 -o /tmp/results
