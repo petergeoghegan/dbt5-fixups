@@ -32,3 +32,95 @@ To actually run the benchmark proper, with 100 clients (-u 100):
 
 pg@bat:~/code/dbt5 peter-monkeys-around-2022$ source env-vars
 pg@bat:~/code/dbt5 peter-monkeys-around-2022$ rm -rf /tmp/results; dbt5-run-workload -a pgsql -c 5000 -t 5000 -d 3600 -u 100 -f 500 -w 300 -n dbt5 -o /tmp/results
+
+Initial DB size:
+
+pg@dbt5:5432 [542731]=# \dt+
+                                         List of relations
+ Schema │        Name        │ Type  │ Owner │ Persistence │ Access method │  Size   │ Description
+────────┼────────────────────┼───────┼───────┼─────────────┼───────────────┼─────────┼─────────────
+ public │ account_permission │ table │ pg    │ permanent   │ heap          │ 2648 kB │
+ public │ address            │ table │ pg    │ permanent   │ heap          │ 584 kB  │
+ public │ broker             │ table │ pg    │ permanent   │ heap          │ 48 kB   │
+ public │ cash_transaction   │ table │ pg    │ permanent   │ heap          │ 9720 MB │
+ public │ charge             │ table │ pg    │ permanent   │ heap          │ 48 kB   │
+ public │ commission_rate    │ table │ pg    │ permanent   │ heap          │ 48 kB   │
+ public │ company            │ table │ pg    │ permanent   │ heap          │ 608 kB  │
+ public │ company_competitor │ table │ pg    │ permanent   │ heap          │ 416 kB  │
+ public │ customer           │ table │ pg    │ permanent   │ heap          │ 984 kB  │
+ public │ customer_account   │ table │ pg    │ permanent   │ heap          │ 2704 kB │
+ public │ customer_taxrate   │ table │ pg    │ permanent   │ heap          │ 472 kB  │
+ public │ daily_market       │ table │ pg    │ permanent   │ heap          │ 297 MB  │
+ public │ exchange           │ table │ pg    │ permanent   │ heap          │ 40 kB   │
+ public │ financial          │ table │ pg    │ permanent   │ heap          │ 6904 kB │
+ public │ holding            │ table │ pg    │ permanent   │ heap          │ 361 MB  │
+ public │ holding_history    │ table │ pg    │ permanent   │ heap          │ 5764 MB │
+ public │ holding_summary    │ table │ pg    │ permanent   │ heap          │ 13 MB   │
+ public │ industry           │ table │ pg    │ permanent   │ heap          │ 40 kB   │
+ public │ last_trade         │ table │ pg    │ permanent   │ heap          │ 296 kB  │
+ public │ news_item          │ table │ pg    │ permanent   │ heap          │ 441 MB  │
+ public │ news_xref          │ table │ pg    │ permanent   │ heap          │ 256 kB  │
+ public │ sector             │ table │ pg    │ permanent   │ heap          │ 40 kB   │
+ public │ security           │ table │ pg    │ permanent   │ heap          │ 576 kB  │
+ public │ settlement         │ table │ pg    │ permanent   │ heap          │ 5886 MB │
+ public │ status_type        │ table │ pg    │ permanent   │ heap          │ 40 kB   │
+ public │ taxrate            │ table │ pg    │ permanent   │ heap          │ 64 kB   │
+ public │ trade              │ table │ pg    │ permanent   │ heap          │ 11 GB   │
+ public │ trade_history      │ table │ pg    │ permanent   │ heap          │ 10 GB   │
+ public │ trade_request      │ table │ pg    │ permanent   │ heap          │ 16 kB   │
+ public │ trade_type         │ table │ pg    │ permanent   │ heap          │ 40 kB   │
+ public │ watch_item         │ table │ pg    │ permanent   │ heap          │ 21 MB   │
+ public │ watch_list         │ table │ pg    │ permanent   │ heap          │ 256 kB  │
+ public │ zip_code           │ table │ pg    │ permanent   │ heap          │ 776 kB  │
+(33 rows)
+
+pg@dbt5:5432 [542731]=# \di+
+                                                     List of relations
+ Schema │         Name          │ Type  │ Owner │       Table        │ Persistence │ Access method │  Size   │ Description
+────────┼───────────────────────┼───────┼───────┼────────────────────┼─────────────┼───────────────┼─────────┼─────────────
+ public │ i_c_tax_id            │ index │ pg    │ customer           │ permanent   │ btree         │ 176 kB  │
+ public │ i_ca_c_id             │ index │ pg    │ customer_account   │ permanent   │ btree         │ 304 kB  │
+ public │ i_co_name             │ index │ pg    │ company            │ permanent   │ btree         │ 128 kB  │
+ public │ i_dm_s_symb           │ index │ pg    │ daily_market       │ permanent   │ btree         │ 30 MB   │
+ public │ i_hh_t_id             │ index │ pg    │ holding_history    │ permanent   │ btree         │ 2239 MB │
+ public │ i_holding             │ index │ pg    │ holding            │ permanent   │ btree         │ 36 MB   │
+ public │ i_security            │ index │ pg    │ security           │ permanent   │ btree         │ 128 kB  │
+ public │ i_t_ca_id             │ index │ pg    │ trade              │ permanent   │ btree         │ 582 MB  │
+ public │ i_t_s_symb            │ index │ pg    │ trade              │ permanent   │ btree         │ 572 MB  │
+ public │ i_t_st_id             │ index │ pg    │ trade              │ permanent   │ btree         │ 571 MB  │
+ public │ i_tr_s_symb           │ index │ pg    │ trade_request      │ permanent   │ btree         │ 16 kB   │
+ public │ i_wl_c_id             │ index │ pg    │ watch_list         │ permanent   │ btree         │ 128 kB  │
+ public │ pk_account_permission │ index │ pg    │ account_permission │ permanent   │ btree         │ 1424 kB │
+ public │ pk_address            │ index │ pg    │ address            │ permanent   │ btree         │ 184 kB  │
+ public │ pk_broker             │ index │ pg    │ broker             │ permanent   │ btree         │ 16 kB   │
+ public │ pk_cash_transaction   │ index │ pg    │ cash_transaction   │ permanent   │ btree         │ 1703 MB │
+ public │ pk_charge             │ index │ pg    │ charge             │ permanent   │ btree         │ 16 kB   │
+ public │ pk_commission_rate    │ index │ pg    │ commission_rate    │ permanent   │ btree         │ 16 kB   │
+ public │ pk_company            │ index │ pg    │ company            │ permanent   │ btree         │ 72 kB   │
+ public │ pk_company_competitor │ index │ pg    │ company_competitor │ permanent   │ btree         │ 312 kB  │
+ public │ pk_customer           │ index │ pg    │ customer           │ permanent   │ btree         │ 128 kB  │
+ public │ pk_customer_account   │ index │ pg    │ customer_account   │ permanent   │ btree         │ 568 kB  │
+ public │ pk_customer_taxrate   │ index │ pg    │ customer_taxrate   │ permanent   │ btree         │ 328 kB  │
+ public │ pk_daily_market       │ index │ pg    │ daily_market       │ permanent   │ btree         │ 125 MB  │
+ public │ pk_exchange           │ index │ pg    │ exchange           │ permanent   │ btree         │ 16 kB   │
+ public │ pk_financial          │ index │ pg    │ financial          │ permanent   │ btree         │ 1552 kB │
+ public │ pk_holding            │ index │ pg    │ holding            │ permanent   │ btree         │ 95 MB   │
+ public │ pk_holding_history    │ index │ pg    │ holding_history    │ permanent   │ btree         │ 3481 MB │
+ public │ pk_holding_summary    │ index │ pg    │ holding_summary    │ permanent   │ btree         │ 7688 kB │
+ public │ pk_industry           │ index │ pg    │ industry           │ permanent   │ btree         │ 16 kB   │
+ public │ pk_last_trade         │ index │ pg    │ last_trade         │ permanent   │ btree         │ 96 kB   │
+ public │ pk_news_item          │ index │ pg    │ news_item          │ permanent   │ btree         │ 128 kB  │
+ public │ pk_news_xref          │ index │ pg    │ news_xref          │ permanent   │ btree         │ 176 kB  │
+ public │ pk_sector             │ index │ pg    │ sector             │ permanent   │ btree         │ 16 kB   │
+ public │ pk_security           │ index │ pg    │ security           │ permanent   │ btree         │ 96 kB   │
+ public │ pk_settlement         │ index │ pg    │ settlement         │ permanent   │ btree         │ 1851 MB │
+ public │ pk_status_type        │ index │ pg    │ status_type        │ permanent   │ btree         │ 16 kB   │
+ public │ pk_taxrate            │ index │ pg    │ taxrate            │ permanent   │ btree         │ 16 kB   │
+ public │ pk_trade              │ index │ pg    │ trade              │ permanent   │ btree         │ 1851 MB │
+ public │ pk_trade_history      │ index │ pg    │ trade_history      │ permanent   │ btree         │ 6234 MB │
+ public │ pk_trade_request      │ index │ pg    │ trade_request      │ permanent   │ btree         │ 16 kB   │
+ public │ pk_trade_type         │ index │ pg    │ trade_type         │ permanent   │ btree         │ 16 kB   │
+ public │ pk_watch_item         │ index │ pg    │ watch_item         │ permanent   │ btree         │ 15 MB   │
+ public │ pk_watch_list         │ index │ pg    │ watch_list         │ permanent   │ btree         │ 128 kB  │
+ public │ pk_zip_code           │ index │ pg    │ zip_code           │ permanent   │ btree         │ 344 kB  │
+(45 rows)
