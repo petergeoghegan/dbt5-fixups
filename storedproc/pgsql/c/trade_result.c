@@ -1832,7 +1832,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	s_name[S_NAME_LEN] = '\0';
 
 	strncpy(type_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(type_name_p))), TT_NAME_LEN);
+			PointerGetDatum(type_name_p))), TT_NAME_LEN + 1);
 	type_name[TT_NAME_LEN] = '\0';
 
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
