@@ -627,7 +627,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 			sprintf(sql, SQLTLF1_4,  trade_id[i]);
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			ret = SPI_execute_plan(TLF1_4, args, nulls, true, 0);
+			ret = SPI_execute_plan(TLF1_4, args, nulls, true, 0); // BUG
 			if (ret == SPI_OK_SELECT) {
 				if (SPI_processed > 0) {
 					int j;

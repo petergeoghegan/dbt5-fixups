@@ -1594,7 +1594,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 			args[0] = Int64GetDatum(atoll(trade_list));
-			ret = SPI_execute_plan(TUF3_6, args, nulls, true, 0);
+			ret = SPI_execute_plan(TUF3_6, args, nulls, true, 0); // BUG
 			if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 				l_tupdesc = SPI_tuptable->tupdesc;
 				l_tuptable = SPI_tuptable;

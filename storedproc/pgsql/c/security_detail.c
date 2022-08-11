@@ -448,7 +448,7 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 		args[0] = CStringGetTextDatum(symbol);
-		ret = SPI_execute_plan(SDF1_1, args, nulls, true, 0);
+		ret = SPI_execute_plan(SDF1_1, args, nulls, true, 0); // BUG
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;

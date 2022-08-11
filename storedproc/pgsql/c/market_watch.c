@@ -280,7 +280,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			frame_index = 3;
 			args[0] = CStringGetTextDatum(symbol);
-			ret = SPI_execute_plan(MWF1_4, args, nulls, true, 0);
+			ret = SPI_execute_plan(MWF1_4, args, nulls, true, 0); // BUG
 
 			if (ret != SPI_OK_SELECT || SPI_processed == 0) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,

@@ -545,7 +545,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TOF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		SPI_connect(); // BUG
 		plan_queries(TOF1_statements);
 
 #ifdef DEBUG

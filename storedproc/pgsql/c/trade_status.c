@@ -180,7 +180,7 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 		args[0] = Int64GetDatum(acct_id);
-		ret = SPI_execute_plan(TSF1_1, args, nulls, true, 0);
+		ret = SPI_execute_plan(TSF1_1, args, nulls, true, 0); // BUG
 		if (ret == SPI_OK_SELECT) {
 			tupdesc = SPI_tuptable->tupdesc;
 			tuptable = SPI_tuptable;
