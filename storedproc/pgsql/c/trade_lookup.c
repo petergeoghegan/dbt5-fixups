@@ -1145,8 +1145,9 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 				NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
-		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(symbol_p))));
+		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
+				PointerGetDatum(symbol_p))), sizeof(symbol));
+		symbol[S_SYMB_LEN + 1] = '\0';
 
 #ifdef DEBUG
 		 dump_tlf3_inputs(end_trade_dts, max_acct_id, max_trades,
