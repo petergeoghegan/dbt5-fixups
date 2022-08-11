@@ -320,7 +320,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 			args[0] = CStringGetTextDatum(symbol);
 			args[1] = DirectFunctionCall1(date_in,
 						CStringGetDatum(pstrdup(buf)));
-			ret = SPI_execute_plan(MWF1_6, args, nulls, true, 0);
+			ret = SPI_execute_plan(MWF1_6, args, nulls, true, 0); // BUG
 			if (ret != SPI_OK_SELECT) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,
 						industry_name, buf, starting_co_id);

@@ -451,7 +451,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) *
+		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) * // BUG
 				max_trades + 2) * sizeof(char));
 		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) *
 				max_trades + 2) * sizeof(char));
@@ -665,10 +665,10 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 							strcat(values[i_trade_history_status_id], ",");
 						}
 						strcat(values[i_trade_history_dts], "NULL");
-						strcat(values[i_trade_history_status_id], "\"\"");
+						strcat(values[i_trade_history_status_id], "\"\"");// BUG
 					}
 					strcat(values[i_trade_history_dts], "}");
-					strcat(values[i_trade_history_status_id], "}");
+					strcat(values[i_trade_history_status_id], "}");// BUG
 					++num_history;
 				}
 			} else {
@@ -687,7 +687,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		strcat(values[i_settlement_cash_due_date], "}");
 		strcat(values[i_settlement_cash_type], "}");
 		strcat(values[i_trade_history_dts], "}");
-		strcat(values[i_trade_history_status_id], "}");
+		strcat(values[i_trade_history_status_id], "}");// BUG
 		strcat(values[i_trade_price], "}");
 
 		sprintf(values[i_num_found], "%d", num_found_count);
@@ -730,7 +730,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 
 		/* Build a tuple. */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		tuple = BuildTupleFromCStrings(attinmeta, values);// BUG
 
 		/* Make the tuple into a datum. */
 		result = HeapTupleGetDatum(tuple);
@@ -1349,7 +1349,7 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 			sprintf(sql, SQLTLF3_4, trade_list_str);
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			ret = SPI_execute_plan(TLF3_4, args, nulls, true, 0);
+			ret = SPI_execute_plan(TLF3_4, args, nulls, true, 0);// BUG
 			if (ret == SPI_OK_SELECT) {
 				if (SPI_processed > 0) {
 					tupdesc2 = SPI_tuptable->tupdesc;
