@@ -1077,7 +1077,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				if (is_lifo == 1) {
 					ret = SPI_execute_plan(TOF3_6a, args, nulls, true, 0);
 				} else {
-					ret = SPI_execute_plan(TOF3_6b, args, nulls, true, 0);
+					ret = SPI_execute_plan(TOF3_6b, args, nulls, true, 0); // BUG
 				}
 #ifdef DEBUG
 				if (is_lifo == 1) {

@@ -340,7 +340,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 		args[0] = Int64GetDatum(cust_id);
-		ret = SPI_execute_plan(CPF1_3, args, nulls, true, 0);
+		ret = SPI_execute_plan(CPF1_3, args, nulls, true, 0); // BUG
 		sprintf(values[i_acct_len], "%" PRId64, SPI_processed);
 #ifdef DEBUG
 		elog(NOTICE, "%d row(s) returned from CPF1_3.", SPI_processed);

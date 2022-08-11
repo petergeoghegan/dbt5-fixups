@@ -216,7 +216,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 			buf, starting_co_id);
 #endif
 
-	SPI_connect();
+	SPI_connect(); // BUG
 	plan_queries(MWF1_statements);
 #ifdef DEBUG
 	if (cust_id != 0) {
@@ -300,7 +300,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			frame_index = 4;
 			args[0] = CStringGetTextDatum(symbol);
-			ret = SPI_execute_plan(MWF1_5, args, nulls, true, 0);
+			ret = SPI_execute_plan(MWF1_5, args, nulls, true, 0); // BUG
 			if (ret != SPI_OK_SELECT) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,
 						industry_name, buf, starting_co_id);
