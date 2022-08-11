@@ -177,6 +177,7 @@
 #define TOF4_3  TOF4_statements[2].plan
 
 static MemoryContext TOF1_savedcxt = NULL;
+static MemoryContext TOF2_savedcxt = NULL;
 static MemoryContext TOF3_savedcxt = NULL;
 
 static cached_statement TOF1_statements[] =
@@ -718,7 +719,7 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	if (ret == SPI_OK_SELECT) {
 		tupdesc = SPI_tuptable->tupdesc;
 		tuptable = SPI_tuptable;
-		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
+		if (SPI_processed > 0) {
 			tuple = tuptable->vals[0];
 			ap_acl = SPI_getvalue(tuple, tupdesc, 1);
 		}
@@ -734,7 +735,9 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	elog(NOTICE, "TOF2 OUT: 1 %s", ap_acl);
 #endif /* DEBUG */
 
-	res = cstring_to_text(ap_acl);
+	TOF2_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
+	res = cstring_to_text_with_len(ap_acl, AP_ACL_LEN);
+	if (TOF2_savedcxt) MemoryContextSwitchTo(TOF2_savedcxt);
 
 	SPI_finish();
 
