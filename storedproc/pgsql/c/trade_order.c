@@ -851,7 +851,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 		funcctx->max_calls = 1;
-		snprintf(values[i_requested_price], (S_PRICE_T_LEN + 1) * sizeof(char), 
+		snprintf(values[i_requested_price], (S_PRICE_T_LEN + 1) * sizeof(char),
 				 "%8.2f", requested_price);
 
 		/* switch to memory context appropriate for multiple function calls */
@@ -1128,7 +1128,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 
 		if (sell_value > buy_value && (tax_status == 1 || tax_status == 2)) {
 #ifdef DEBUG
-			snprintf(sql, SQLTOF3_7, cust_id);
+			sprintf(sql, SQLTOF3_7, cust_id);
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 			args[0] = Int64GetDatum(cust_id);
@@ -1230,11 +1230,11 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				tuptable = SPI_tuptable;
 				if (SPI_processed > 0) {
 					tuple = tuptable->vals[0];
-					snprintf(values[i_cust_assets], S_PRICE_T_LEN + 1,
+					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
 							 "%8.2f",
 							 atof(SPI_getvalue(tuple, tupdesc, 1)) * acct_bal);
 				} else {
-					snprintf(values[i_cust_assets], S_PRICE_T_LEN + 1,
+					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
 							 "%8.2f", acct_bal);
 				}
 			} else {
