@@ -867,7 +867,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			}
 			co_name_esc[k] = '\0';
 
-			values[i_co_name] = co_name_esc;
+			values[i_co_name] = pstrdup(co_name_esc);
 #ifdef DEBUG
 			sprintf(sql, SQLTOF3_1a, co_name_esc);
 			elog(NOTICE, "SQL\n%s", sql);
@@ -911,7 +911,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[1].sql);
 			}
 		} else {
-			values[i_symbol] = symbol;
+			values[i_symbol] = pstrdup(symbol);
 #ifdef DEBUG
 			sprintf(sql, SQLTOF3_1b, symbol);
 			elog(NOTICE, "SQL\n%s", sql);
