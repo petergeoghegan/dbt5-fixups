@@ -1686,7 +1686,6 @@ Datum TradeResultFrame5(PG_FUNCTION_ARGS)
 
 	struct pg_tm tt, *tm = &tt;
 	fsec_t fsec;
-	char *tzn = NULL;
 #ifdef DEBUG
 	char sql[2048];
 #endif
@@ -1709,7 +1708,7 @@ Datum TradeResultFrame5(PG_FUNCTION_ARGS)
 			numeric_float8_no_overflow, PointerGetDatum(trade_price_num)));
 
 	if (timestamp2tm(trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, trade_dts);
+		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, trade_dts);
 	}
 	else
 		ereport(ERROR,
@@ -1787,7 +1786,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 
 	struct pg_tm tt, *tm = &tt;
 	fsec_t fsec;
-	char *tzn = NULL;
 
 	int ret;
 	TupleDesc tupdesc;
@@ -1801,9 +1799,9 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	Datum args[6];
 	char nulls[6];
 
-	char s_name[2 * S_NAME_LEN + 1];
+	char s_name[4 * S_NAME_LEN + 1];
 	char *s_name_tmp;
-	char type_name[TT_NAME_LEN + 1];
+	char type_name[4 * TT_NAME_LEN + 1];
 	double se_amount;
 
 	char due_date[MAXDATELEN + 1];
@@ -1835,8 +1833,9 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 			PointerGetDatum(type_name_p))), TT_NAME_LEN + 1);
 	type_name[TT_NAME_LEN] = '\0';
 
+	/* EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str) */
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, due_date);
+		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
 	}
 	else
 		ereport(ERROR,
@@ -1844,7 +1843,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 				 errmsg("due_date_ts timestamp out of range")));
 
 	if (timestamp2tm(trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, trade_dts);
+		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, trade_dts);
 	}
 	else
 		ereport(ERROR,

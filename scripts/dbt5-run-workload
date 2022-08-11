@@ -512,7 +512,7 @@ fi
 echo
 echo "3. Starting Customer driver: ${USERS} user(s)"
 echo "   1 user starting every ${SLEEPY} milliseconds..."
-sleep 30
+sleep 3
 echo "   THIS TIME I MEAN IT"
 DriverMain -c ${CUSTOMERS_INSTANCE} -t ${CUSTOMERS_TOTAL} \
 		-f ${SCALE_FACTOR} -w ${ITD} -d ${DURATION} -y ${SLEEPY} \
