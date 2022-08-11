@@ -564,7 +564,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 			strcat(values[i_trade_status], "}");
 		} else {
 			if (ret == SPI_OK_SELECT && SPI_processed == 0) {
-				elog(WARNING, "Query CPF2_1 should return 10-30 rows.");
+				elog(WARNING, "DBT5: Query CPF2_1 should return 10-30 rows.");
 			}
 			dump_cpf2_inputs(acct_id);
 			FAIL_FRAME_SET(&funcctx->max_calls, CPF2_statements[1].sql);
