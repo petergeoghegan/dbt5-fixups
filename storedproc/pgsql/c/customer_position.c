@@ -302,7 +302,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		args[0] = Int64GetDatum(cust_id);
 		ret = SPI_execute_plan(CPF1_2, args, nulls, true, 0);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned from CPF1_2.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned from CPF1_2.", SPI_processed);
 #endif /* DEBUG */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			tupdesc = SPI_tuptable->tupdesc;
@@ -343,7 +343,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		ret = SPI_execute_plan(CPF1_3, args, nulls, true, 0); // BUG
 		sprintf(values[i_acct_len], "%" PRId64, SPI_processed);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned from CPF1_3.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned from CPF1_3.", SPI_processed);
 #endif /* DEBUG */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			/* Total number of tuples to be returned. */
@@ -497,7 +497,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		ret = SPI_execute_plan(CPF2_1, args, nulls, true, 0);
 		sprintf(values[i_hist_len], "%" PRId64, SPI_processed);
 #ifdef DEBUG
-		elog(NOTICE, "%d row(s) returned.", SPI_processed);
+		elog(NOTICE, "%ld row(s) returned.", SPI_processed);
 #endif /* DEBUG */
 		/* Should return 1 to rows. */
 		if (ret == SPI_OK_SELECT && SPI_processed > 0) {

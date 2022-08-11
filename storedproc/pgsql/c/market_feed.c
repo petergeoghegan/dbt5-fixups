@@ -414,7 +414,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 				continue;
 			}
 #ifdef DEBUG
-			elog(NOTICE, "%d row(s) returned", SPI_processed);
+			elog(NOTICE, "%ld row(s) returned", SPI_processed);
 #endif /* DEBUG */
 
 			tupdesc = SPI_tuptable->tupdesc;
