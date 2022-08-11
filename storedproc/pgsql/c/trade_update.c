@@ -509,7 +509,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		values[i_trade_history_dts] = (char *) palloc(((MAXDATELEN * 3 + 4) *
 				20 + 22) * sizeof(char));
 		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN +
-				2) * 3 + 4) * 20 + 22) * sizeof(char));
+				2) * 3 + 4) * 40 + 22) * sizeof(char));
 		values[i_trade_price] =
 				(char *) palloc(((S_PRICE_T_LEN + 1) * 20 + 2) * sizeof(char));
 
@@ -921,7 +921,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		values[i_cash_transaction_dts] =
 				(char *) palloc(((MAXDATELEN + 1) * 20 + 2) * sizeof(char));
 		values[i_cash_transaction_name] =
-				(char *) palloc(((CT_NAME_LEN + 3) * 20 + 2) * sizeof(char));
+				(char *) palloc(((CT_NAME_LEN + 3) * 40 + 2) * sizeof(char));
 		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) * 20 +
 				2) * sizeof(char));
 		values[i_is_cash] =
@@ -1532,7 +1532,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 						sprintf(ct_name, "%s %s shares of %s", type_name,
 								quantity, s_name);
 					}
-					for (j = 0, k = 0; j < CT_NAME_LEN || ct_name[j] != '\0'; j++, k++) {
+					for (j = 0, k = 0; j < CT_NAME_LEN && ct_name[j] != '\0'; j++, k++) {
 						if (ct_name[j] == '\'')
 							ct_name_esc[k++] = '\\';
 						ct_name_esc[k] = ct_name[j];

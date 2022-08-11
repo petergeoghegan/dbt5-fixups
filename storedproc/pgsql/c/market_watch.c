@@ -207,8 +207,9 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 	EncodeDateOnly(tm, DateStyle, buf);
 
-	strcpy(industry_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(industry_name_p))));
+	strncpy(industry_name, DatumGetCString(DirectFunctionCall1(textout,
+															   PointerGetDatum(industry_name_p))),
+			sizeof(industry_name));
 
 #ifdef DEBUG
 	dump_mwf1_inputs(acct_id, cust_id, ending_co_id, industry_name,
