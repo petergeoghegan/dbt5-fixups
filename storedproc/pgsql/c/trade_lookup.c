@@ -444,16 +444,16 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		 */
 		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
-		
+
 		values[i_bid_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_amount] = (char *) palloc(((VALUE_T_LEN +
 				1) * max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) * // BUG
+		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 10) * // BUG
 				max_trades + 2) * sizeof(char));
-		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) *
+		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 10) *
 				max_trades + 2) * sizeof(char));
 		values[i_is_cash] = (char *) palloc(((BOOLEAN_LEN + 1) * max_trades +
 				2) * sizeof(char));
@@ -468,7 +468,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 1) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
-		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 3) *
+		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 10) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
 		values[i_trade_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
