@@ -679,6 +679,7 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	char exec_tax_id[AP_TAX_ID_LEN + 1];
 
 	int ret;
+	text *res;
 	TupleDesc tupdesc;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
@@ -731,8 +732,11 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	elog(NOTICE, "TOF2 OUT: 1 %s", ap_acl);
 #endif /* DEBUG */
 
+	res = cstring_to_text_with_len(ap_acl, AP_ACL_LEN);
+
 	SPI_finish();
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(ap_acl, AP_ACL_LEN));
+
+	PG_RETURN_VARCHAR_P(res);
 }
 
 /* Clause 3.3.7.5 */
