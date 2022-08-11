@@ -821,7 +821,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
-		values = (char **) palloc(sizeof(char *) * 14);
+		values = (char **) palloc(sizeof(char *) * 15);
 		values[i_requested_price] = (char *) palloc((S_PRICE_T_LEN + 1) *
 				sizeof(char));
 		values[i_buy_value] = (char *) palloc((S_PRICE_T_LEN + 1) *
