@@ -835,9 +835,9 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
-		SRF_RETURN_DONE(funcctx);
 		if (TUF1_savedcxt)
 			MemoryContextSwitchTo(TUF1_savedcxt);
+		SRF_RETURN_DONE(funcctx);
 	}
 }
 
