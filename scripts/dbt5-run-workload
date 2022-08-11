@@ -611,7 +611,7 @@ dbt5-post-process ${MIXFILE} > ${RESULTSFILE}
 echo "Killing Servers..."
 killall BrokerageHouseMain MarketExchangeMain DriverMain 2> /dev/null
 
-${DB_COMMAND} dbt5-${DBMS}-stop-db
+# ${DB_COMMAND} dbt5-${DBMS}-stop-db
 
 if [ ${USE_OPROFILE} -eq 1 ]; then
 	oprofile_annotate ${DRIVER_OUTPUT_DIR} &
