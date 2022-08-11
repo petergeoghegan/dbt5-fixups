@@ -478,24 +478,24 @@ SLEEPYTIME=`expr ${SLEEP_RAMPUP} + ${DURATION}`
 SAMPLE_LENGTH=60
 ITERATIONS=`expr ${SLEEPYTIME} / ${SAMPLE_LENGTH}`
 ITERATIONS=`expr ${ITERATIONS} + 1`
-if [ ! "x${DB_HOSTNAME}" = "x" ] && [ ! "x${DB_HOSTNAME}" = "xlocalhost" ]; then
-	dbt5-sysstats --iter ${ITERATIONS} \
-			--sample ${SAMPLE_LENGTH} \
-			--outdir ${DRIVER_OUTPUT_DIR} > ${DRIVER_OUTPUT_DIR}/stats.out 2>&1 &
-
-	${DB_COMMAND} dbt5-sysstats --iter ${ITERATIONS} \
-			--sample ${SAMPLE_LENGTH} \
-			--outdir ${DB_OUTPUT_DIR} > ${DB_OUTPUT_DIR}/stats.out 2>&1 &
-else
-	dbt5-sysstats --iter ${ITERATIONS} \
-			--sample ${SAMPLE_LENGTH} \
-			--outdir ${DB_OUTPUT_DIR} > ${DRIVER_OUTPUT_DIR}/stats.out 2>&1 &
-fi
-${DB_COMMAND} dbt5-${DBMS}-db-stat \
-		-o ${DB_OUTPUT_DIR} \
-		-i ${ITERATIONS} \
-		${DB_PORT_ARG} \
-		-s ${SAMPLE_LENGTH} > ${DB_OUTPUT_DIR}/dbstats.out 2>&1 &
+# if [ ! "x${DB_HOSTNAME}" = "x" ] && [ ! "x${DB_HOSTNAME}" = "xlocalhost" ]; then
+# 	dbt5-sysstats --iter ${ITERATIONS} \
+# 			--sample ${SAMPLE_LENGTH} \
+# 			--outdir ${DRIVER_OUTPUT_DIR} > ${DRIVER_OUTPUT_DIR}/stats.out 2>&1 &
+#
+# 	${DB_COMMAND} dbt5-sysstats --iter ${ITERATIONS} \
+# 			--sample ${SAMPLE_LENGTH} \
+# 			--outdir ${DB_OUTPUT_DIR} > ${DB_OUTPUT_DIR}/stats.out 2>&1 &
+# else
+# 	dbt5-sysstats --iter ${ITERATIONS} \
+# 			--sample ${SAMPLE_LENGTH} \
+# 			--outdir ${DB_OUTPUT_DIR} > ${DRIVER_OUTPUT_DIR}/stats.out 2>&1 &
+# fi
+# ${DB_COMMAND} dbt5-${DBMS}-db-stat \
+# 		-o ${DB_OUTPUT_DIR} \
+# 		-i ${ITERATIONS} \
+# 		${DB_PORT_ARG} \
+# 		-s ${SAMPLE_LENGTH} > ${DB_OUTPUT_DIR}/dbstats.out 2>&1 &
 
 # Initialize oprofile before we start the driver.
 if [ ${USE_OPROFILE} -eq 1 ]; then
@@ -512,6 +512,8 @@ fi
 echo
 echo "3. Starting Customer driver: ${USERS} user(s)"
 echo "   1 user starting every ${SLEEPY} milliseconds..."
+sleep 10
+echo "   THIS TIME I MEAN IT"
 DriverMain -c ${CUSTOMERS_INSTANCE} -t ${CUSTOMERS_TOTAL} \
 		-f ${SCALE_FACTOR} -w ${ITD} -d ${DURATION} -y ${SLEEPY} \
 		-u ${USERS} -n ${PACING_DELAY} ${SEEDARG} \

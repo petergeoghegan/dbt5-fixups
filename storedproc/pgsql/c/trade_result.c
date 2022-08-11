@@ -1702,8 +1702,12 @@ Datum TradeResultFrame5(PG_FUNCTION_ARGS)
 			numeric_float8_no_overflow, PointerGetDatum(trade_price_num)));
 
 	if (timestamp2tm(trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTimeM(tm, fsec, tzn, trade_dts);
+		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, trade_dts);
 	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("trade_dts_ts timestamp out of range")));
 
 
 #ifdef DEBUG
@@ -1824,11 +1828,20 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	type_name[TT_NAME_LEN] = '\0';
 
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTimeM(tm, fsec, tzn, due_date);
+		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, due_date);
 	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("due_date_ts timestamp out of range")));
+
 	if (timestamp2tm(trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
-		EncodeDateTimeM(tm, fsec, tzn, trade_dts);
+		EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, trade_dts);
 	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 	dump_trf6_inputs(acct_id, due_date, s_name, se_amount, trade_dts,
