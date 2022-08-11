@@ -435,12 +435,14 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
+
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
 		
 		values[i_bid_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
@@ -777,7 +779,7 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
@@ -790,6 +792,7 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 
 		char *is_cash_str;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
@@ -1120,7 +1123,7 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = {' ', ' ', ' ', ' ' };
+		char nulls[4];
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
@@ -1133,6 +1136,7 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 
 		char *is_cash_str;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 
@@ -1470,13 +1474,14 @@ Datum TradeLookupFrame4(PG_FUNCTION_ARGS)
 		int num_found_count = 0;
 		int num_trades_found_count = 0;
 		Datum args[2];
-		char nulls[2] = {' ', ' ' };
+		char nulls[2];
 
 		int ret;
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple = NULL;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
 				NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);

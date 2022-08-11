@@ -462,7 +462,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[2];
-		char nulls[2] = { ' ', ' ' };
+		char nulls[2];
 
 		int num_found = max_trades;
 		int num_updated = 0;
@@ -471,6 +471,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		int num_updated7 = 0;
 		int num_cash = 0;
 
+		memset(nulls, 0, sizeof(nulls));
 		get_typlenbyvalalign(ARR_ELEMTYPE(trade_id_p), &typlen, &typbyval,
 				&typalign);
 		trade_id = (long *) ARR_DATA_PTR(trade_id_p);
@@ -883,7 +884,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 
 		char end_trade_dts[MAXDATELEN + 1];
 		char start_trade_dts[MAXDATELEN + 1];
@@ -892,6 +893,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		int num_updated = 0;
 		int num_cash = 0;
 
+		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
@@ -1296,7 +1298,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[4];
-		char nulls[4] = { ' ', ' ', ' ', ' ' };
+		char nulls[4];
 
 		char symbol[S_SYMB_LEN + 1];
 		char end_trade_dts[MAXDATELEN + 1];
@@ -1306,6 +1308,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		int num_updated = 0;
 		int num_cash = 0;
 
+		memset(nulls, 0, sizeof(nulls));
 		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {

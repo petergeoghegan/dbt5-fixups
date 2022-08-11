@@ -198,8 +198,11 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	char sql[2048] = "";
 #endif
 	Datum args[3];
-	char nulls[3] = { ' ', ' ', ' ' };
+	char nulls[3];
 	int frame_index = 0;
+
+	memset(nulls, 0, sizeof(nulls));
+
 	j2date(start_date_p + POSTGRES_EPOCH_JDATE,
 	   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 	EncodeDateOnly(tm, DateStyle, buf);

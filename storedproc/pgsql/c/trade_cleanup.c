@@ -160,8 +160,9 @@ Datum TradeCleanupFrame1(PG_FUNCTION_ARGS)
 	int i, n;
 	char *tr_t_id = NULL;
 	Datum args[2];
-	char nulls[] = { ' ', ' ' };
+	char nulls[2];
 
+	memset(nulls, 0, sizeof(nulls));
 	strcpy(st_canceled_id, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(st_canceled_id_p))));
 	strcpy(st_pending_id, DatumGetCString(DirectFunctionCall1(textout,

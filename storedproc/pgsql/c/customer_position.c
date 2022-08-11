@@ -243,7 +243,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		char sql[1024];
 #endif /* DEBUG */
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple;
@@ -253,6 +253,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 27);
 		values[i_cust_id] = (char *) palloc((IDENT_T_LEN + 1) * sizeof(char));
 		values[i_acct_len] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
@@ -464,7 +465,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 
 		int ret;
 		Datum args[1];
-		char nulls[] = { ' ' };
+		char nulls[1];
 #ifdef DEBUG
 		char sql[1024];
 		dump_cpf2_inputs(acct_id);
@@ -475,6 +476,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 6);
 		values[i_hist_len] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 

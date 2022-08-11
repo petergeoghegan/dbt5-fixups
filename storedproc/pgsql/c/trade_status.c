@@ -128,12 +128,13 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
 		values[i_charge] =
 				(char *) palloc((VALUE_T_LEN + 1) * sizeof(char) * 50);

@@ -396,8 +396,9 @@ Datum SecurityDetailFrame1(PG_FUNCTION_ARGS)
 #endif
 		char *co_id = NULL;
 		Datum args[3];
-		char nulls[3] = { ' ', ' ', ' ' };
+		char nulls[3];
 
+		memset(nulls, 0, sizeof(nulls));
 		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))), S_SYMB_LEN);
 		symbol[S_SYMB_LEN] = '\0';

@@ -148,13 +148,14 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 #endif
 		char broker_list_array[(B_NAME_LEN + 3) * 40 + 5] = "'{";
 		Datum args[2];
-		char nulls[2] = { ' ', ' ' };
+		char nulls[2];
 
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 3);
 		values[i_list_len] = (char *) palloc((SMALLINT_LEN + 1) * sizeof(char));
 

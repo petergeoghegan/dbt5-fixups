@@ -274,8 +274,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[7];
-		char nulls[] = { ' ', ' ', ' ', ' ', ' ',
-						' ', ' ' };
+		char nulls[7];
 		char price_quote[S_PRICE_T_LEN + 1];
 		char status_submitted[ST_ID_LEN + 1];
 		char symbol[S_SYMB_LEN + 1];
@@ -292,6 +291,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 7);
 		values[i_num_updated] =
 				(char *) palloc((INTEGER_LEN + 1) * sizeof(char));

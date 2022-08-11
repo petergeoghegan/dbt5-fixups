@@ -521,7 +521,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple = NULL;
 		Datum args[1];
-		char nulls[1] = { ' ' };
+		char nulls[1];
 #ifdef DEBUG
 		char sql[2048];
 #endif /* DEBUG */
@@ -530,6 +530,7 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 10);
 		values[i_num_found] = (char *) palloc((BIGINT_LEN + 1) * sizeof(char));
 
@@ -690,8 +691,9 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 
 	char *ap_acl = NULL;
 	Datum args[5];
-	char nulls[5] = { ' ', ' ', ' ', ' ', ' '};
+	char nulls[5];
 
+	memset(nulls, 0, sizeof(nulls));
 	strcpy(exec_f_name, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(exec_f_name_p))));
 	strcpy(exec_l_name, DatumGetCString(DirectFunctionCall1(textout,
@@ -799,10 +801,10 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		char *co_id = NULL;
 		double tax_amount = 0;
 		Datum args[5];
-		char nulls[5] = { ' ', ' ', ' ', ' ', ' '};
-
+		char nulls[5];
 		char co_name_esc[CO_NAME_LEN * 2 + 1];
 
+		memset(nulls, 0, sizeof(nulls));
 		strcpy(co_name, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(co_name_p))));
 		strcpy(issue, DatumGetCString(DirectFunctionCall1(textout,
@@ -849,7 +851,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 		funcctx->max_calls = 1;
-		sprintf(values[i_requested_price], "%8.2f", requested_price);
+		snprintf(values[i_requested_price], (S_PRICE_T_LEN + 1) * sizeof(char), 
+				 "%8.2f", requested_price);
 
 		/* switch to memory context appropriate for multiple function calls */
 		TOF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -1118,12 +1121,14 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			}
 		}
 
-		sprintf(values[i_buy_value], "%8.2f", buy_value);
-		sprintf(values[i_sell_value], "%8.2f", sell_value);
+		snprintf(values[i_buy_value], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", buy_value);
+		snprintf(values[i_sell_value], (S_PRICE_T_LEN + 1) * sizeof(char),
+				 "%8.2f", sell_value);
 
 		if (sell_value > buy_value && (tax_status == 1 || tax_status == 2)) {
 #ifdef DEBUG
-			sprintf(sql, SQLTOF3_7, cust_id);
+			snprintf(sql, SQLTOF3_7, cust_id);
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 			args[0] = Int64GetDatum(cust_id);
@@ -1143,7 +1148,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[9].sql);
 			}
 		}
-		sprintf(values[i_tax_amount], "%8.2f", tax_amount);
+		snprintf(values[i_tax_amount], (S_PRICE_T_LEN + 1) * sizeof(char), "%8.2f", tax_amount);
 
 #ifdef DEBUG
 		sprintf(sql, SQLTOF3_8, cust_tier, trade_type_id, exch_id, trade_qty,
@@ -1335,9 +1340,9 @@ Datum TradeOrderFrame4(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	long trade_id = 0;
 	Datum args[11];
-	char nulls[11] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-					' ', ' ', ' ', ' ' };
+	char nulls[11];
 
+	memset(nulls, 0, sizeof(nulls));
 	strcpy(exec_name, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(exec_name_p))));
 	strcpy(status_id, DatumGetCString(DirectFunctionCall1(textout,
