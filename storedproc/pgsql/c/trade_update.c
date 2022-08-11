@@ -1302,7 +1302,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		char end_trade_dts[MAXDATELEN + 1];
 		char start_trade_dts[MAXDATELEN + 1];
 
-		int num_found;
+		int num_found = 0;
 		int num_updated = 0;
 		int num_cash = 0;
 
