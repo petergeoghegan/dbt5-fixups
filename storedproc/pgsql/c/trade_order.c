@@ -734,7 +734,7 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	elog(NOTICE, "TOF2 OUT: 1 %s", ap_acl);
 #endif /* DEBUG */
 
-	res = cstring_to_text_with_len(ap_acl, AP_ACL_LEN);
+	res = cstring_to_text(ap_acl);
 
 	SPI_finish();
 
