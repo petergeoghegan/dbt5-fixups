@@ -659,12 +659,14 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif /* DEBUG */
 		Datum args[2];
-		char nulls[2] = {' ', ' ' };
+		char nulls[2];
+
 		/*
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 */
+		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 12);
 		values[i_num_found] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 
@@ -864,7 +866,7 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 
 		char sql[2048];
 		Datum args[6];
-		char nulls[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
+		char nulls[6];
 
 		char symbol[S_SYMB_LEN + 1];
 		double trade_price;
@@ -872,6 +874,7 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 
 		double buy_value = 0;
 		double sell_value = 0;
+		memset(nulls, 0, sizeof(nulls));
 
 		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))), S_SYMB_LEN);
@@ -1441,7 +1444,9 @@ Datum TradeResultFrame3(PG_FUNCTION_ARGS)
 
 	double tax_amount = 0;
 	Datum args[2];
-	char nulls[2] = { ' ', ' ' };
+	char nulls[2];
+
+	memset(nulls, 0, sizeof(nulls));
 
 	buy_value = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(buy_value_num)));
@@ -1526,7 +1531,7 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 		char sql[2048];
 #endif
 		Datum args[5];
-		char nulls[5] = { ' ', ' ', ' ', ' ', ' ' };
+		char nulls[5];
 
 		char symbol[S_SYMB_LEN + 1];
 		char type_id[TT_ID_LEN + 1];
@@ -1534,6 +1539,7 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 		char *s_ex_id = NULL;
 		char *c_tier = NULL;
 
+		memset(nulls, 0, sizeof(nulls));
 		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))), S_SYMB_LEN);
 		symbol[S_SYMB_LEN] = '\0';
@@ -1685,13 +1691,14 @@ Datum TradeResultFrame5(PG_FUNCTION_ARGS)
 	char sql[2048];
 #endif
 	Datum args[5];
-	char nulls[5] = { ' ', ' ', ' ', ' ', ' '};
+	char nulls[5];
 
 	double comm_amount;
 	double trade_price;
 	char trade_dts[MAXDATELEN + 1];
 	char st_completed_id[ST_ID_LEN + 1];
 
+	memset(nulls, 0, sizeof(nulls));
 	strncpy(st_completed_id, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(st_completed_id_p))), ST_ID_LEN);
 	st_completed_id[ST_ID_LEN] = '\0';
@@ -1792,7 +1799,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	char sql[2048];
 #endif
 	Datum args[6];
-	char nulls[6] = { ' ', ' ', ' ', ' ', ' ', ' '};
+	char nulls[6];
 
 	char s_name[2 * S_NAME_LEN + 1];
 	char *s_name_tmp;
@@ -1808,6 +1815,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 
 	int i;
 	int k = 0;
+	memset(nulls, 0, sizeof(nulls));
 
 	se_amount = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(se_amount_num)));
