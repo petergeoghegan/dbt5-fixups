@@ -42,6 +42,8 @@
 
 #define BVF1_1 BVF1_statements[0].plan
 
+static MemoryContext BVF1_savedcxt = NULL;
+
 static cached_statement BVF1_statements[] =
 {
 	/* BVF1_1 */
@@ -128,8 +130,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		ArrayType *broker_list_p = PG_GETARG_ARRAYTYPE_P(0);
 		text *sector_name_p = PG_GETARG_TEXT_P(1);
 
@@ -201,7 +201,7 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		BVF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(BVF1_statements);
@@ -272,7 +272,7 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(BVF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -303,6 +303,7 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (BVF1_savedcxt) MemoryContextSwitchTo(BVF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

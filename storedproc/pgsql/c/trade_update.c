@@ -157,6 +157,10 @@ PG_MODULE_MAGIC;
 #define TUF3_5  TUF3_statements[4].plan
 #define TUF3_6  TUF3_statements[5].plan
 
+static MemoryContext TUF1_savedcxt = NULL;
+static MemoryContext TUF2_savedcxt = NULL;
+static MemoryContext TUF3_savedcxt = NULL;
+
 static cached_statement TUF1_statements[] = {
 
 	/* TUF1_1 */
@@ -431,8 +435,6 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum tuf1 {
 				i_bid_price=0, i_cash_transaction_amount,
 				i_cash_transaction_dts, i_cash_transaction_name, i_exec_name,
@@ -450,8 +452,6 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		bool typbyval;
 		char typalign;
 
-		int ndim, nitems;
-		int *dim;
 		long *trade_id;
 
 		int ret;
@@ -470,10 +470,6 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		int num_updated5 = 0;
 		int num_updated7 = 0;
 		int num_cash = 0;
-
-		ndim = ARR_NDIM(trade_id_p);
-		dim = ARR_DIMS(trade_id_p);
-		nitems = ArrayGetNItems(ndim, dim);
 
 		get_typlenbyvalalign(ARR_ELEMTYPE(trade_id_p), &typlen, &typbyval,
 				&typalign);
@@ -525,7 +521,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TUF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TUF1_statements);
@@ -808,7 +804,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TUF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -839,6 +835,7 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TUF1_savedcxt) MemoryContextSwitchTo(TUF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -858,8 +855,6 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum tuf2 {
 				i_bid_price=0, i_cash_transaction_amount,
 				i_cash_transaction_dts, i_cash_transaction_name, i_exec_name,
@@ -951,7 +946,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TUF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TUF2_statements);
@@ -1219,7 +1214,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TUF2_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -1250,6 +1245,7 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TUF2_savedcxt) MemoryContextSwitchTo(TUF2_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -1270,8 +1266,6 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum tuf3 {
 				i_acct_id=0, i_cash_transaction_amount,
 				i_cash_transaction_dts, i_cash_transaction_name, i_exec_name,
@@ -1378,7 +1372,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TUF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TUF3_statements);
@@ -1534,7 +1528,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 						sprintf(ct_name, "%s %s shares of %s", type_name,
 								quantity, s_name);
 					}
-					for (j = 0, k = 0; j < CT_NAME_LEN && ct_name[j] != '\0'; j++, k++) {
+					for (j = 0, k = 0; j < CT_NAME_LEN || ct_name[j] != '\0'; j++, k++) {
 						if (ct_name[j] == '\'')
 							ct_name_esc[k++] = '\\';
 						ct_name_esc[k] = ct_name[j];
@@ -1668,7 +1662,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TUF3_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -1699,6 +1693,7 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TUF3_savedcxt) MemoryContextSwitchTo(TUF3_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

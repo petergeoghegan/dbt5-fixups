@@ -99,6 +99,9 @@ PG_MODULE_MAGIC;
 
 #define CPF2_1 CPF2_statements[0].plan
 
+static MemoryContext CPF1_savedcxt = NULL;
+static MemoryContext CPF2_savedcxt = NULL;
+
 static cached_statement CPF1_statements[] = {
 
 	/* CPF1_1 */
@@ -224,8 +227,6 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		text *tax_id_p;
 
 		enum cpf1 {
@@ -260,7 +261,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/* Switch to memory context appropriate for multiple function calls. */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		CPF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		cust_id = PG_GETARG_INT64(0);
 		tax_id_p= PG_GETARG_TEXT_P(1);
@@ -412,7 +413,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		/* save SPI data for use across calls */
 		funcctx->user_fctx = tuptable;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(CPF1_savedcxt);
 	}
 
 	/* Stuff done on every call of the function. */
@@ -437,6 +438,7 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, result);
 	} else {
 		SPI_finish();
+		if (CPF1_savedcxt) MemoryContextSwitchTo(CPF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -449,8 +451,6 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 	int i;
 
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		TupleDesc tupdesc;
 		SPITupleTable *tuptable = NULL;
 		HeapTuple tuple;
@@ -483,7 +483,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* Switch to memory context appropriate for multiple function calls. */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		CPF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(CPF2_statements);
@@ -602,7 +602,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		/* save SPI data for use across calls */
 		funcctx->user_fctx = tuptable;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(CPF2_savedcxt);
 	}
 
 	/* Stuff done on every call of the function. */
@@ -627,6 +627,7 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, result);
 	} else {
 		SPI_finish();
+		if (CPF2_savedcxt) MemoryContextSwitchTo(CPF2_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

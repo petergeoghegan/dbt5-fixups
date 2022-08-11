@@ -85,6 +85,8 @@ typedef int16 NumericDigit;
 #define MFF1_4 MFF1_statements[3].plan
 #define MFF1_5 MFF1_statements[4].plan
 
+static MemoryContext MFF1_savedcxt = NULL;
+
 static cached_statement MFF1_statements[] = {
 	/* MFF1_1 */
 	{
@@ -241,8 +243,6 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		ArrayType *price_quote_p = PG_GETARG_ARRAYTYPE_P(0);
 		char *status_submitted_p = (char *) PG_GETARG_TEXT_P(1);
 		ArrayType *symbol_p = PG_GETARG_ARRAYTYPE_P(2);
@@ -347,7 +347,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MFF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(MFF1_statements);
@@ -524,7 +524,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(MFF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -555,6 +555,7 @@ Datum MarketFeedFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (MFF1_savedcxt) MemoryContextSwitchTo(MFF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

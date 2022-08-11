@@ -225,6 +225,10 @@ PG_MODULE_MAGIC;
 #define TRF6_3 TRF6_statements[2].plan
 #define TRF6_4 TRF6_statements[3].plan
 
+static MemoryContext TRF1_savedcxt = NULL;
+static MemoryContext TRF2_savedcxt = NULL;
+static MemoryContext TRF4_savedcxt = NULL;
+
 static cached_statement TRF1_statements[] = {
 
 	/* TRF1_1 */
@@ -639,8 +643,6 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum trf1 {
 				i_acct_id=0, i_charge, i_hs_qty, i_is_lifo, i_num_found,
 				i_symbol, i_trade_is_cash, i_trade_qty, i_type_id,
@@ -675,7 +677,7 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TRF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TRF1_statements);
@@ -791,7 +793,7 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TRF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -822,6 +824,7 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TRF1_savedcxt) MemoryContextSwitchTo(TRF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -840,8 +843,6 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum trf2 {
 				i_broker_id=0, i_buy_value, i_cust_id, i_sell_value,
 				i_tax_status, i_trade_dts
@@ -899,7 +900,7 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TRF2_savedcxt= MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TRF2_statements);
@@ -1382,7 +1383,7 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TRF2_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -1413,6 +1414,7 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TRF2_savedcxt) MemoryContextSwitchTo(TRF2_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
@@ -1509,8 +1511,6 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 
 	/* Stuff done only on the first call of the function. */
 	if (SRF_IS_FIRSTCALL()) {
-		MemoryContext oldcontext;
-
 		enum trf4 { i_comm_rate=0, i_s_name };
 
 		long cust_id = PG_GETARG_INT64(0);
@@ -1557,7 +1557,7 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 		funcctx->max_calls = 1;
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		TRF4_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		SPI_connect();
 		plan_queries(TRF4_statements);
@@ -1630,7 +1630,7 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(TRF4_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -1661,6 +1661,7 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
+		if (TRF4_savedcxt) MemoryContextSwitchTo(TRF4_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
