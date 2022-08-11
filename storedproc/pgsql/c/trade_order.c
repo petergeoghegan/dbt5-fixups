@@ -671,9 +671,9 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 {
 	long acct_id = PG_GETARG_INT64(0);
-	text       *exec_f_name = PG_GETARG_TEXT_P(1);
-	text       *exec_l_name = PG_GETARG_TEXT_P(2);
-	text       *exec_tax_id = PG_GETARG_TEXT_P(3);
+	text       *exec_f_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(1));
+	text       *exec_l_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(2));
+	text       *exec_tax_id = DatumGetTextPCopy(PG_GETARG_TEXT_P(3));
 
 	int ret;
 	text *res;
