@@ -1793,6 +1793,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	HeapTuple tuple = NULL;
 
 	Datum result;
+	double se_amount = 0;
 #ifdef DEBUG
 	char sql[2048];
 #endif
@@ -1802,7 +1803,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	char s_name[4 * S_NAME_LEN + 1];
 	char *s_name_tmp;
 	char type_name[4 * TT_NAME_LEN + 1];
-	double se_amount;
 
 	char due_date[MAXDATELEN + 1];
 	char trade_dts[MAXDATELEN + 1];
@@ -1827,7 +1827,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 		s_name[k++] = s_name_tmp[i];
 	}
 	s_name[k] = '\0';
-	s_name[S_NAME_LEN] = '\0';
+	/* s_name[S_NAME_LEN] = '\0'; */
 
 	strncpy(type_name, DatumGetCString(DirectFunctionCall1(textout,
 			PointerGetDatum(type_name_p))), TT_NAME_LEN + 1);

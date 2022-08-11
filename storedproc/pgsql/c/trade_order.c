@@ -671,13 +671,9 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 {
 	long acct_id = PG_GETARG_INT64(0);
-	char *exec_f_name_p = (char *) PG_GETARG_TEXT_P(1);
-	char *exec_l_name_p = (char *) PG_GETARG_TEXT_P(2);
-	char *exec_tax_id_p = (char *) PG_GETARG_TEXT_P(3);
-
-	char exec_f_name[AP_F_NAME_LEN + 1];
-	char exec_l_name[AP_L_NAME_LEN + 1];
-	char exec_tax_id[AP_TAX_ID_LEN + 1];
+	text       *exec_f_name = PG_GETARG_TEXT_P(1);
+	text       *exec_l_name = PG_GETARG_TEXT_P(2);
+	text       *exec_tax_id = PG_GETARG_TEXT_P(3);
 
 	int ret;
 	text *res;
@@ -694,28 +690,28 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	char nulls[5];
 
 	memset(nulls, 0, sizeof(nulls));
-	strcpy(exec_f_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_f_name_p))));
-	strcpy(exec_l_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_l_name_p))));
-	strcpy(exec_tax_id, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(exec_tax_id_p))));
 #ifdef DEBUG
-	dump_tof2_inputs(acct_id, exec_f_name, exec_l_name, exec_tax_id);
+	dump_tof2_inputs(acct_id,
+					 text_to_cstring(exec_f_name),
+					 text_to_cstring(exec_l_name),
+					 text_to_cstring(exec_tax_id));
 #endif
 
 	SPI_connect();
 	plan_queries(TOF2_statements);
 
 #ifdef DEBUG
-	sprintf(sql, SQLTOF2_1, acct_id, exec_f_name, exec_l_name, exec_tax_id);
+	sprintf(sql, SQLTOF2_1, acct_id,
+			text_to_cstring(exec_f_name),
+			text_to_cstring(exec_l_name),
+			text_to_cstring(exec_tax_id));
 	elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 
 	args[0] = Int64GetDatum(acct_id);
-	args[1] = CStringGetTextDatum(exec_f_name);
-	args[2] = CStringGetTextDatum(exec_l_name);
-	args[3] = CStringGetTextDatum(exec_tax_id);
+	args[1] = PointerGetDatum(exec_f_name);
+	args[2] = PointerGetDatum(exec_l_name);
+	args[3] = PointerGetDatum(exec_tax_id);
 
 	ret = SPI_execute_plan(TOF2_1, args, nulls, true, 0);
 	if (ret == SPI_OK_SELECT) {
@@ -727,7 +723,10 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 		}
 	} else {
 		FAIL_FRAME(TOF2_statements[0].sql);
-		dump_tof2_inputs(acct_id, exec_f_name, exec_l_name, exec_tax_id);
+		dump_tof2_inputs(acct_id,
+						 text_to_cstring(exec_f_name),
+						 text_to_cstring(exec_l_name),
+						 text_to_cstring(exec_tax_id));
 	}
 
 #ifdef DEBUG
