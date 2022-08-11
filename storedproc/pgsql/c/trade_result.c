@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <postgres.h>
 #include <fmgr.h>
+#include "catalog/pg_collation.h"
 #include <executor/spi.h> /* this should include most necessary APIs */
 #include <executor/executor.h>  /* for GetAttributeByName() */
 #include <funcapi.h> /* for returning set of rows in order_status */
@@ -1776,13 +1777,13 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 {
 	long acct_id = PG_GETARG_INT64(0);
 	Timestamp due_date_ts = PG_GETARG_TIMESTAMP(1);
-	char *s_name_p = (char *) PG_GETARG_TEXT_P(2);
+	text       *s_name  = DatumGetTextPCopy(PG_GETARG_TEXT_P(2));
 	Numeric se_amount_num = PG_GETARG_NUMERIC(3);
 	Timestamp trade_dts_ts = PG_GETARG_TIMESTAMP(4);
 	long trade_id = PG_GETARG_INT64(5);
 	int trade_is_cash = PG_GETARG_INT16(6);
 	int trade_qty = PG_GETARG_INT32(7);
-	char *type_name_p = (char *) PG_GETARG_TEXT_P(8);
+	text       *type_name   = DatumGetTextPCopy(PG_GETARG_TEXT_P(8));
 
 	struct pg_tm tt, *tm = &tt;
 	fsec_t fsec;
@@ -1800,10 +1801,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	Datum args[6];
 	char nulls[6];
 
-	char s_name[4 * S_NAME_LEN + 1];
-	char *s_name_tmp;
-	char type_name[4 * TT_NAME_LEN + 1];
-
 	char due_date[MAXDATELEN + 1];
 	char trade_dts[MAXDATELEN + 1];
 
@@ -1811,13 +1808,18 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 
 	double acct_bal = 0;
 
-	int i;
-	int k = 0;
 	memset(nulls, 0, sizeof(nulls));
 
 	se_amount = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(se_amount_num)));
 
+	s_name = DatumGetTextPCopy(DirectFunctionCall3Coll(replace_text,
+													   C_COLLATION_OID,
+													   PointerGetDatum(s_name),
+													   CStringGetTextDatum("'"),
+													   CStringGetTextDatum("")));
+
+#if 0
 	s_name_tmp =  DatumGetCString(DirectFunctionCall1(textout,
                PointerGetDatum(s_name_p)));
 
@@ -1828,12 +1830,10 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	}
 	s_name[k] = '\0';
 	/* s_name[S_NAME_LEN] = '\0'; */
+#endif
 
-	strncpy(type_name, DatumGetCString(DirectFunctionCall1(textout,
-			PointerGetDatum(type_name_p))), TT_NAME_LEN + 1);
-	type_name[TT_NAME_LEN] = '\0';
-
-	/* EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str) */
+	/* EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz,
+	 * const char *tzn, int style, char *str) */
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
 	}
@@ -1851,8 +1851,8 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 				 errmsg("trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
-	dump_trf6_inputs(acct_id, due_date, s_name, se_amount, trade_dts,
-			trade_id, trade_is_cash, trade_qty, type_name);
+	dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
+			trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 #endif
 
 	SPI_connect();
@@ -1875,8 +1875,8 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	ret = SPI_execute_plan(TRF6_1, args, nulls, false, 0); // BUG
 	if (ret != SPI_OK_INSERT) {
 		FAIL_FRAME(TRF6_statements[0].sql);
-		dump_trf6_inputs(acct_id, due_date, s_name, se_amount, trade_dts,
-				trade_id, trade_is_cash, trade_qty, type_name);
+		dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
+				trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 	}
 
 	if (trade_is_cash == 1) {
@@ -1889,25 +1889,25 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 		ret = SPI_execute_plan(TRF6_2, args, nulls, false, 0);
 		if (ret != SPI_OK_UPDATE) {
 			FAIL_FRAME(TRF6_statements[1].sql);
-			dump_trf6_inputs(acct_id, due_date, s_name, se_amount, trade_dts,
-					trade_id, trade_is_cash, trade_qty, type_name);
+			dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
+					trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 		}
 #ifdef DEBUG
-		sprintf(sql, SQLTRF6_3, trade_dts, trade_id, se_amount, type_name,
-				trade_qty, s_name);
+		sprintf(sql, SQLTRF6_3, trade_dts, trade_id, se_amount, text_to_cstring(type_name),
+				trade_qty, text_to_cstring(s_name));
 		elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
 		args[0] = TimestampGetDatum(trade_dts_ts);
 		args[1] = Int64GetDatum(trade_id);
 		args[2] = Float8GetDatum(se_amount);
-		args[3] = CStringGetTextDatum(type_name);
+		args[3] = PointerGetDatum(type_name);
 		args[4] = Int32GetDatum(trade_qty);
-		args[5] = CStringGetTextDatum(s_name);
+		args[5] = PointerGetDatum(s_name);
 		ret = SPI_execute_plan(TRF6_3, args, nulls, false, 0);
 		if (ret != SPI_OK_INSERT) {
 			FAIL_FRAME(TRF6_statements[2].sql);
-			dump_trf6_inputs(acct_id, due_date, s_name, se_amount,
-					trade_dts, trade_id, trade_is_cash, trade_qty, type_name);
+			dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount,
+					trade_dts, trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 		}
 	}
 
@@ -1923,8 +1923,8 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 		tuple = tuptable->vals[0];
 		acct_bal = atof(SPI_getvalue(tuple, tupdesc, 1));
 	} else {
-		dump_trf6_inputs(acct_id, due_date, s_name, se_amount, trade_dts,
-				trade_id, trade_is_cash, trade_qty, type_name);
+		dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
+				trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 		FAIL_FRAME(TRF6_statements[3].sql);
 	}
 
