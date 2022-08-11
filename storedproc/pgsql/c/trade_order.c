@@ -717,7 +717,7 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	if (ret == SPI_OK_SELECT) {
 		tupdesc = SPI_tuptable->tupdesc;
 		tuptable = SPI_tuptable;
-		if (SPI_processed > 0) {
+		if (ret == SPI_OK_SELECT && SPI_processed > 0) {
 			tuple = tuptable->vals[0];
 			ap_acl = SPI_getvalue(tuple, tupdesc, 1);
 		}
