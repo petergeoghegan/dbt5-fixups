@@ -1819,21 +1819,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 													   CStringGetTextDatum("'"),
 													   CStringGetTextDatum("")));
 
-#if 0
-	s_name_tmp =  DatumGetCString(DirectFunctionCall1(textout,
-               PointerGetDatum(s_name_p)));
-
-	for (i = 0; i < S_NAME_LEN && s_name_tmp[i] != '\0'; i++) {
-		if (s_name_tmp[i] == '\'')
-			s_name[k++] = '\\';
-		s_name[k++] = s_name_tmp[i];
-	}
-	s_name[k] = '\0';
-	/* s_name[S_NAME_LEN] = '\0'; */
-#endif
-
-	/* EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz,
-	 * const char *tzn, int style, char *str) */
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
 	}

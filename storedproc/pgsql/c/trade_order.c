@@ -17,6 +17,7 @@
 #include <funcapi.h> /* for returning set of rows in order_status */
 #include <utils/numeric.h>
 #include <utils/builtins.h>
+#include "catalog/pg_collation.h"
 #include <catalog/pg_type.h>
 
 #include "frame.h"
@@ -749,7 +750,6 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 	int max_calls;
 
 	int i;
-	int k = 0;
 
 	enum tof3 {
 			i_co_name=0, i_requested_price, i_symbol, i_buy_value,
@@ -773,16 +773,14 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		int trade_qty = PG_GETARG_INT32(8);
 		char *trade_type_id_p = (char *) PG_GETARG_TEXT_P(9);
 		int type_is_margin = PG_GETARG_INT16(10);
-		char *co_name_p = (char *) PG_GETARG_TEXT_P(11);
+		text       *co_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(11));
 		Numeric requested_price_num = PG_GETARG_NUMERIC(12);
-		char *symbol_p = (char *) PG_GETARG_TEXT_P(13);
+		text       *symbol  = DatumGetTextPCopy(PG_GETARG_TEXT_P(13));
 
-		char co_name[CO_NAME_LEN + 1];
 		char issue[7];
 		char st_pending_id[10];
 		char st_submitted_id[10];
 		char trade_type_id[TT_ID_LEN + 1];
-		char symbol[S_SYMB_LEN + 1];
 		double requested_price;
 		int hs_qty = 0;
 		int needed_qty;
@@ -801,11 +799,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		double tax_amount = 0;
 		Datum args[5];
 		char nulls[5];
-		char co_name_esc[CO_NAME_LEN * 2 + 1];
 
 		memset(nulls, 0, sizeof(nulls));
-		strcpy(co_name, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(co_name_p))));
 		strcpy(issue, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(issue_p))));
 		strcpy(st_pending_id, DatumGetCString(DirectFunctionCall1(textout,
@@ -814,8 +809,6 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				PointerGetDatum(st_submitted_id_p))));
 		strcpy(trade_type_id, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(trade_type_id_p))));
-		strcpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
-				PointerGetDatum(symbol_p))));
 
 		requested_price = DatumGetFloat8(DirectFunctionCall1(
 				numeric_float8_no_overflow,
@@ -843,8 +836,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 #ifdef DEBUG
 		dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 				st_pending_id, st_submitted_id, tax_status, trade_qty,
-				trade_type_id, type_is_margin, co_name, requested_price,
-				symbol);
+				trade_type_id, type_is_margin, text_to_cstring(co_name),
+				requested_price, text_to_cstring(symbol));
 #endif
 
 		/* create a function context for cross-call persistence */
@@ -859,20 +852,13 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		SPI_connect();
 		plan_queries(TOF3_statements);
 
-		if (strlen(symbol) == 0) {
-			for (i = 0; i < CO_NAME_LEN && co_name[i] != '\0'; i++) {
-				if (co_name[i] == '\'')
-					co_name_esc[k++] = '\\';
-				co_name_esc[k++] = co_name[i];
-			}
-			co_name_esc[k] = '\0';
-
-			values[i_co_name] = pstrdup(co_name_esc);
+		if (VARSIZE_ANY_EXHDR(PointerGetDatum(symbol)) == 0) {
+			values[i_co_name] = text_to_cstring(co_name);
 #ifdef DEBUG
-			sprintf(sql, SQLTOF3_1a, co_name_esc);
+			sprintf(sql, SQLTOF3_1a, text_to_cstring(co_name));
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			args[0] = PointerGetDatum(co_name_p);
+			args[0] = PointerGetDatum(co_name);
 
 			ret = SPI_execute_plan(TOF3_1a, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT && SPI_processed > 0) {
@@ -883,8 +869,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[0].sql);
 			}
 
@@ -906,17 +893,18 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[1].sql);
 			}
 		} else {
-			values[i_symbol] = pstrdup(symbol);
+			values[i_symbol] = text_to_cstring(symbol);
 #ifdef DEBUG
-			sprintf(sql, SQLTOF3_1b, symbol);
+			sprintf(sql, SQLTOF3_1b, text_to_cstring(symbol));
 			elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-			args[0] = CStringGetTextDatum(symbol);
+			args[0] = PointerGetDatum(symbol);
 
 			ret = SPI_execute_plan(TOF3_1b, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT && SPI_processed > 0) {
@@ -929,8 +917,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[2].sql);
 			}
 
@@ -949,8 +938,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[3].sql);
 			}
 		}
@@ -970,8 +960,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[4].sql);
 		}
 
@@ -991,8 +981,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[5].sql);
 		}
 
@@ -1043,8 +1033,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls,(hs_qty > 0? TOF3_statements[7].sql:
 								TOF3_statements[8].sql));
 			}
@@ -1093,8 +1084,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 				} else {
 					dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo,
 							issue, st_pending_id, st_submitted_id, tax_status,
-							trade_qty, trade_type_id, type_is_margin, co_name,
-							requested_price, symbol);
+							trade_qty, trade_type_id, type_is_margin,
+							text_to_cstring(co_name), requested_price,
+							text_to_cstring(symbol));
 					FAIL_FRAME_SET(&funcctx->max_calls, (is_lifo == 1?						 			TOF3_statements[7].sql: TOF3_statements[8].sql));
 				}
 			}
@@ -1142,8 +1134,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[9].sql);
 			}
 		}
@@ -1169,8 +1162,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[8].sql);
 		}
 
@@ -1190,8 +1183,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		} else {
 			dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 					st_pending_id, st_submitted_id, tax_status, trade_qty,
-					trade_type_id, type_is_margin, co_name, requested_price,
-					symbol);
+					trade_type_id, type_is_margin, text_to_cstring(co_name),
+					requested_price, text_to_cstring(symbol));
 			FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[11].sql);
 		}
 
@@ -1214,8 +1207,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[12].sql);
 			}
 
@@ -1239,8 +1233,9 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 			} else {
 				dump_tof3_inputs(acct_id, cust_id, cust_tier, is_lifo, issue,
 						st_pending_id, st_submitted_id, tax_status, trade_qty,
-						trade_type_id, type_is_margin, co_name, requested_price,
-						symbol);
+						trade_type_id, type_is_margin,
+						text_to_cstring(co_name), requested_price,
+						text_to_cstring(symbol));
 				FAIL_FRAME_SET(&funcctx->max_calls, TOF3_statements[13].sql);
 
 			}
