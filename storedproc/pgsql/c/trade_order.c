@@ -1231,7 +1231,7 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 					tuple = tuptable->vals[0];
 					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
 							 "%8.2f",
-							 atof(SPI_getvalue(tuple, tupdesc, 1)) * acct_bal);
+							 atof(SPI_getvalue(tuple, tupdesc, 1)) * acct_bal); // NEW BUG
 				} else {
 					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
 							 "%8.2f", acct_bal);
