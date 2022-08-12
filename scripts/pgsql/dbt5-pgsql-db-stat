@@ -30,6 +30,9 @@ while getopts "d:i:p:o:s:" opt; do
 	esac
 done
 
+
+exit 0
+
 if [ "x${DBT5DBNAME}" = "x" ]; then
 	echo "DBT5DBNAME not defined."
 	exit 1
@@ -52,7 +55,7 @@ PG_CONFIG_HEADER=`pg_config --includedir`/pg_config.h
 PG_VERSION_NUM=`grep 'PG_VERSION_NUM' $PG_CONFIG_HEADER | sed 's/[^0-9]//g'`
 
 # Get database parameters.
-${PSQL} -c "show all" > ${OUTPUT_DIR}/param.out
+# ${PSQL} -c "show all" > ${OUTPUT_DIR}/param.out
 
 # Get list of tables in the public schema, where dbt5 should be.
 # This file is used for the report generation.
