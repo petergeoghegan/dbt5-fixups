@@ -441,6 +441,10 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		 * Prepare a values array for building the returned tuple.
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
+		 *
+		 * XXX On what basis do we determine the size of the arrays, in
+		 * particular for i_cash_transaction_name and
+		 * i_trade_history_status_id?
 		 */
 		memset(nulls, 0, sizeof(nulls));
 		values = (char **) palloc(sizeof(char *) * 14);
@@ -451,9 +455,9 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) *
-				max_trades + 2) * sizeof(char));
-		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) *
+		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 10) *
+				max_trades + 20) * sizeof(char));
+		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 10) *
 				max_trades + 2) * sizeof(char));
 		values[i_is_cash] = (char *) palloc(((BOOLEAN_LEN + 1) * max_trades +
 				2) * sizeof(char));
@@ -468,8 +472,8 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 1) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
-		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 3) *
-				max_trades + 3) * 3 + 2) * sizeof(char));
+		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 10) *
+				max_trades + 30) * 3 + 2) * sizeof(char));
 		values[i_trade_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
 
