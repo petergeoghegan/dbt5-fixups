@@ -93,11 +93,11 @@ PG_MODULE_MAGIC;
 		"LIMIT 30"
 #endif /* End DEBUG */
 
-#define CPF1_1 CPF1_statements[0].plan
-#define CPF1_2 CPF1_statements[1].plan
-#define CPF1_3 CPF1_statements[2].plan
+#define CPF1_1 (*CPF1_statements[0].plan)
+#define CPF1_2 (*CPF1_statements[1].plan)
+#define CPF1_3 (*CPF1_statements[2].plan)
 
-#define CPF2_1 CPF2_statements[0].plan
+#define CPF2_1 (*CPF2_statements[0].plan)
 
 static MemoryContext CPF1_savedcxt = NULL;
 static MemoryContext CPF2_savedcxt = NULL;
@@ -270,7 +270,8 @@ Datum CustomerPositionFrame1(PG_FUNCTION_ARGS)
 		dump_cpf1_inputs(cust_id, tax_id_p);
 #endif /* DEBUG */
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(CPF1_statements);
 		if (cust_id == 0) {
 #ifdef DEBUG
@@ -487,7 +488,8 @@ Datum CustomerPositionFrame2(PG_FUNCTION_ARGS)
 		/* Switch to memory context appropriate for multiple function calls. */
 		CPF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(CPF2_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLCPF2_1, acct_id);

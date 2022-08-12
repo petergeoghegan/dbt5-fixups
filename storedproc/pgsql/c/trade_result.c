@@ -193,42 +193,43 @@ PG_MODULE_MAGIC;
 		"WHERE ca_id = %ld"
 #endif /* End DEBUG */
 
-#define TRF1_1  TRF1_statements[0].plan
-#define TRF1_2  TRF1_statements[1].plan
-#define TRF1_3  TRF1_statements[2].plan
+#define TRF1_1  (*TRF1_statements[0].plan)
+#define TRF1_2  (*TRF1_statements[1].plan)
+#define TRF1_3  (*TRF1_statements[2].plan)
 
-#define TRF2_1  TRF2_statements[0].plan
-#define TRF2_2a TRF2_statements[1].plan
-#define TRF2_2b TRF2_statements[2].plan
-#define TRF2_3a TRF2_statements[3].plan
-#define TRF2_3b TRF2_statements[4].plan
-#define TRF2_4a TRF2_statements[5].plan
-#define TRF2_5a TRF2_statements[6].plan
-#define TRF2_5b TRF2_statements[7].plan
-#define TRF2_7a TRF2_statements[8].plan
-#define TRF2_7b TRF2_statements[9].plan
-#define TRF2_8a TRF2_statements[10].plan
-#define TRF2_8b TRF2_statements[11].plan
+#define TRF2_1  (*TRF2_statements[0].plan)
+#define TRF2_2a (*TRF2_statements[1].plan)
+#define TRF2_2b (*TRF2_statements[2].plan)
+#define TRF2_3a (*TRF2_statements[3].plan)
+#define TRF2_3b (*TRF2_statements[4].plan)
+#define TRF2_4a (*TRF2_statements[5].plan)
+#define TRF2_5a (*TRF2_statements[6].plan)
+#define TRF2_5b (*TRF2_statements[7].plan)
+#define TRF2_7a (*TRF2_statements[8].plan)
+#define TRF2_7b (*TRF2_statements[9].plan)
+#define TRF2_8a (*TRF2_statements[10].plan)
+#define TRF2_8b (*TRF2_statements[11].plan)
 
-#define TRF3_1 TRF3_statements[0].plan
-#define TRF3_2 TRF3_statements[1].plan
+#define TRF3_1 (*TRF3_statements[0].plan)
+#define TRF3_2 (*TRF3_statements[1].plan)
 
-#define TRF4_1 TRF4_statements[0].plan
-#define TRF4_2 TRF4_statements[1].plan
-#define TRF4_3 TRF4_statements[2].plan
+#define TRF4_1 (*TRF4_statements[0].plan)
+#define TRF4_2 (*TRF4_statements[1].plan)
+#define TRF4_3 (*TRF4_statements[2].plan)
 
-#define TRF5_1 TRF5_statements[0].plan
-#define TRF5_2 TRF5_statements[1].plan
-#define TRF5_3 TRF5_statements[2].plan
+#define TRF5_1 (*TRF5_statements[0].plan)
+#define TRF5_2 (*TRF5_statements[1].plan)
+#define TRF5_3 (*TRF5_statements[2].plan)
 
-#define TRF6_1 TRF6_statements[0].plan
-#define TRF6_2 TRF6_statements[1].plan
-#define TRF6_3 TRF6_statements[2].plan
-#define TRF6_4 TRF6_statements[3].plan
+#define TRF6_1 (*TRF6_statements[0].plan)
+#define TRF6_2 (*TRF6_statements[1].plan)
+#define TRF6_3 (*TRF6_statements[2].plan)
+#define TRF6_4 (*TRF6_statements[3].plan)
 
 static MemoryContext TRF1_savedcxt = NULL;
 static MemoryContext TRF2_savedcxt = NULL;
 static MemoryContext TRF4_savedcxt = NULL;
+static MemoryContext TRF6_savedcxt = NULL;
 
 static cached_statement TRF1_statements[] = {
 
@@ -467,7 +468,7 @@ static cached_statement TRF5_statements[] = {
 	"    t_trade_price = $4\n" \
 	"WHERE t_id = $5",
 	5,
-	{ FLOAT4OID, TIMESTAMPOID, TEXTOID, FLOAT8OID, INT8OID }
+	{ FLOAT8OID, TIMESTAMPOID, TEXTOID, FLOAT8OID, INT8OID }
 	},
 
 	/* TRF5_2 */
@@ -682,7 +683,8 @@ Datum TradeResultFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TRF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TRF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTRF1_1, trade_id);
@@ -906,7 +908,8 @@ Datum TradeResultFrame2(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TRF2_savedcxt= MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TRF2_statements);
 
 		strncpy(sql, "SELECT now()::timestamp(0)", 27);
@@ -1458,7 +1461,8 @@ Datum TradeResultFrame3(PG_FUNCTION_ARGS)
 	dump_trf3_inputs(buy_value, cust_id, sell_value, trade_id);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TRF3_statements);
 #ifdef DEBUG
 	sprintf(sql, SQLTRF3_1, cust_id);
@@ -1566,7 +1570,8 @@ Datum TradeResultFrame4(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TRF4_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TRF4_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTRF4_1, symbol);
@@ -1722,14 +1727,15 @@ Datum TradeResultFrame5(PG_FUNCTION_ARGS)
 			trade_id, trade_price);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TRF5_statements);
 #ifdef DEBUG
 	sprintf(sql, SQLTRF5_1, comm_amount, trade_dts, st_completed_id, trade_price,
 			trade_id);
 	elog(NOTICE, "SQL\n%s", sql);
 #endif /* DEBUG */
-	args[0] = PointerGetDatum(comm_amount_num);
+	args[0] = Float8GetDatum(comm_amount);
 	args[1] = TimestampGetDatum(trade_dts_ts);
 	args[2] = CStringGetTextDatum(st_completed_id);
 	args[3] = PointerGetDatum(trade_price_num);
@@ -1809,7 +1815,9 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	double acct_bal = 0;
 
 	memset(nulls, 0, sizeof(nulls));
+	memset(cash_type, 0, sizeof(cash_type));
 
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	se_amount = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(se_amount_num)));
 
@@ -1817,7 +1825,9 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 													   C_COLLATION_OID,
 													   PointerGetDatum(s_name),
 													   CStringGetTextDatum("'"),
-													   CStringGetTextDatum("")));
+													   CStringGetTextDatum("\\'")));
+
+	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
@@ -1840,8 +1850,11 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 			trade_id, trade_is_cash, trade_qty, text_to_cstring(type_name));
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	plan_queries(TRF6_statements);
+	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 
 	if (trade_is_cash == 1) {
 		strcpy(cash_type, "Cash Account");
@@ -1855,9 +1868,11 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	args[0] = Int64GetDatum(trade_id);
 	args[1] = CStringGetTextDatum(cash_type);
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	args[2] = DirectFunctionCall1(date_in, CStringGetDatum(due_date));
+	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 	args[4] = Float8GetDatum(se_amount);
-	ret = SPI_execute_plan(TRF6_1, args, nulls, false, 0); // BUG
+	ret = SPI_execute_plan(TRF6_1, args, nulls, false, 0); // triggers float8_numeric valgrind BUG
 	if (ret != SPI_OK_INSERT) {
 		FAIL_FRAME(TRF6_statements[0].sql);
 		dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
@@ -1887,7 +1902,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 		args[2] = Float8GetDatum(se_amount);
 		args[3] = PointerGetDatum(type_name);
 		args[4] = Int32GetDatum(trade_qty);
-		args[5] = PointerGetDatum(s_name);
+		args[5] = (Datum) DatumGetTextPCopy(s_name);
 		ret = SPI_execute_plan(TRF6_3, args, nulls, false, 0);
 		if (ret != SPI_OK_INSERT) {
 			FAIL_FRAME(TRF6_statements[2].sql);
@@ -1914,10 +1929,14 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	}
 
 #ifdef DEBUG
-		elog(NOTICE, "TRF5 OUT: 1 %f", acct_bal);
+		elog(NOTICE, "TRF6 OUT: 1 %f", acct_bal);
 #endif /* DEBUG */
 
-	SPI_finish();
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(acct_bal));
+	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
+
+	SPI_finish();
+
 	PG_RETURN_NUMERIC(result);
 }

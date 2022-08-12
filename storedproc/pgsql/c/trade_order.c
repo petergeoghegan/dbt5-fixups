@@ -151,30 +151,30 @@
 		"VALUES(%ld, now(), '%s')"
 #endif /* DEBUG */
 
-#define TOF1_1  TOF1_statements[0].plan
-#define TOF1_2  TOF1_statements[1].plan
-#define TOF1_3  TOF1_statements[2].plan
+#define TOF1_1  (*TOF1_statements[0].plan)
+#define TOF1_2  (*TOF1_statements[1].plan)
+#define TOF1_3  (*TOF1_statements[2].plan)
 
-#define TOF2_1  TOF2_statements[0].plan
+#define TOF2_1  (*TOF2_statements[0].plan)
 
-#define TOF3_1a TOF3_statements[0].plan
-#define TOF3_2a TOF3_statements[1].plan
-#define TOF3_1b TOF3_statements[2].plan
-#define TOF3_2b TOF3_statements[3].plan
-#define TOF3_3  TOF3_statements[4].plan
-#define TOF3_4  TOF3_statements[5].plan
-#define TOF3_5  TOF3_statements[6].plan
-#define TOF3_6a TOF3_statements[7].plan
-#define TOF3_6b TOF3_statements[8].plan
-#define TOF3_7  TOF3_statements[9].plan
-#define TOF3_8  TOF3_statements[10].plan
-#define TOF3_9  TOF3_statements[11].plan
-#define TOF3_10 TOF3_statements[12].plan
-#define TOF3_11 TOF3_statements[13].plan
+#define TOF3_1a (*TOF3_statements[0].plan)
+#define TOF3_2a (*TOF3_statements[1].plan)
+#define TOF3_1b (*TOF3_statements[2].plan)
+#define TOF3_2b (*TOF3_statements[3].plan)
+#define TOF3_3  (*TOF3_statements[4].plan)
+#define TOF3_4  (*TOF3_statements[5].plan)
+#define TOF3_5  (*TOF3_statements[6].plan)
+#define TOF3_6a (*TOF3_statements[7].plan)
+#define TOF3_6b (*TOF3_statements[8].plan)
+#define TOF3_7  (*TOF3_statements[9].plan)
+#define TOF3_8  (*TOF3_statements[10].plan)
+#define TOF3_9  (*TOF3_statements[11].plan)
+#define TOF3_10 (*TOF3_statements[12].plan)
+#define TOF3_11 (*TOF3_statements[13].plan)
 
-#define TOF4_1  TOF4_statements[0].plan
-#define TOF4_2  TOF4_statements[1].plan
-#define TOF4_3  TOF4_statements[2].plan
+#define TOF4_1  (*TOF4_statements[0].plan)
+#define TOF4_2  (*TOF4_statements[1].plan)
+#define TOF4_3  (*TOF4_statements[2].plan)
 
 static MemoryContext TOF1_savedcxt = NULL;
 static MemoryContext TOF2_savedcxt = NULL;
@@ -547,7 +547,8 @@ Datum TradeOrderFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TOF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect(); // BUG
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TOF1_statements);
 
 #ifdef DEBUG
@@ -699,7 +700,8 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 					 text_to_cstring(exec_tax_id));
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TOF2_statements);
 
 #ifdef DEBUG
@@ -852,7 +854,8 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TOF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TOF3_statements);
 
 		if (VARSIZE_ANY_EXHDR(PointerGetDatum(symbol)) == 0) {
@@ -1365,7 +1368,8 @@ Datum TradeOrderFrame4(PG_FUNCTION_ARGS)
 			trade_qty, trade_type_id, type_is_market);
 #endif
 
-	SPI_connect();
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(TOF4_statements);
 
 #ifdef DEBUG

@@ -134,28 +134,28 @@ PG_MODULE_MAGIC;
 #define SQLTUF3_6 SQLTUF2_6
 #endif /* End DEBUG */
 
-#define TUF1_1  TUF1_statements[0].plan
-#define TUF1_2a TUF1_statements[1].plan
-#define TUF1_2b TUF1_statements[2].plan
-#define TUF1_3  TUF1_statements[3].plan
-#define TUF1_4  TUF1_statements[4].plan
-#define TUF1_5  TUF1_statements[5].plan
-#define TUF1_6  TUF1_statements[6].plan
-#define TUF1_7  TUF1_statements[7].plan
+#define TUF1_1  (*TUF1_statements[0].plan)
+#define TUF1_2a (*TUF1_statements[1].plan)
+#define TUF1_2b (*TUF1_statements[2].plan)
+#define TUF1_3  (*TUF1_statements[3].plan)
+#define TUF1_4  (*TUF1_statements[4].plan)
+#define TUF1_5  (*TUF1_statements[5].plan)
+#define TUF1_6  (*TUF1_statements[6].plan)
+#define TUF1_7  (*TUF1_statements[7].plan)
 
-#define TUF2_1  TUF2_statements[0].plan
-#define TUF2_2  TUF2_statements[1].plan
-#define TUF2_3  TUF2_statements[2].plan
-#define TUF2_4  TUF2_statements[3].plan
-#define TUF2_5  TUF2_statements[4].plan
-#define TUF2_6  TUF2_statements[5].plan
+#define TUF2_1  (*TUF2_statements[0].plan)
+#define TUF2_2  (*TUF2_statements[1].plan)
+#define TUF2_3  (*TUF2_statements[2].plan)
+#define TUF2_4  (*TUF2_statements[3].plan)
+#define TUF2_5  (*TUF2_statements[4].plan)
+#define TUF2_6  (*TUF2_statements[5].plan)
 
-#define TUF3_1  TUF3_statements[0].plan
-#define TUF3_2  TUF3_statements[1].plan
-#define TUF3_3  TUF3_statements[2].plan
-#define TUF3_4  TUF3_statements[3].plan
-#define TUF3_5  TUF3_statements[4].plan
-#define TUF3_6  TUF3_statements[5].plan
+#define TUF3_1  (*TUF3_statements[0].plan)
+#define TUF3_2  (*TUF3_statements[1].plan)
+#define TUF3_3  (*TUF3_statements[2].plan)
+#define TUF3_4  (*TUF3_statements[3].plan)
+#define TUF3_5  (*TUF3_statements[4].plan)
+#define TUF3_6  (*TUF3_statements[5].plan)
 
 static MemoryContext TUF1_savedcxt = NULL;
 static MemoryContext TUF2_savedcxt = NULL;
@@ -524,7 +524,8 @@ Datum TradeUpdateFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TUF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF1_statements);
 
 		strcpy(values[i_bid_price], "{");
@@ -951,7 +952,8 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TUF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF2_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTUF2_1, acct_id, start_trade_dts, end_trade_dts,
@@ -1378,7 +1380,8 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TUF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF3_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTUF3_1, symbol, start_trade_dts, end_trade_dts,

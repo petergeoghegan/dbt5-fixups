@@ -10,6 +10,7 @@
 #ifndef _DBT5COMMON_H_
 #define _DBT5COMMON_H_
 #define DEBUG
+#include "executor/spi.h"
 
 /*
  * cached_statement encapsulates all we need to know about a query to prepare
@@ -19,7 +20,7 @@ typedef struct{
 	const char	*sql;		/*  statement text */
 	int		nargs;		/*  number of arguments in the query */
 	Oid		argtypes[11];	/*  argument types */
-	SPIPlanPtr 	plan;		/*  plan_queries() stores the prepared plan here */
+	SPIPlanPtr 	*plan;		/*  plan_queries() stores the prepared plan here */
 } cached_statement;
 
 /*
@@ -39,10 +40,21 @@ static void plan_queries(cached_statement *statements)
 		if (s->plan == NULL)
 		{
 			SPIPlanPtr plan = SPI_prepare(s->sql, s->nargs, s->argtypes);
+			Assert(s->nargs <= 11);
+
 			if (plan == NULL)
 				elog(ERROR,  "Failed to plan query: %s", s->sql);
-			s->plan = SPI_saveplan(plan);
-			SPI_freeplan(plan);
+
+			/*
+			 * Remember that SPI_prepare places plan in current memory context -
+			 * so, we have to save plan in TopMemoryContext for later use.
+			 */
+			if (SPI_keepplan(plan))
+				elog(ERROR,  "Failed to keep planned query: %s", s->sql);
+
+			s->plan = (SPIPlanPtr *) MemoryContextAlloc(TopMemoryContext,
+														sizeof(SPIPlanPtr));
+			*(s->plan) = plan;
 		}
 	}
 }

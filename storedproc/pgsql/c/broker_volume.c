@@ -40,7 +40,7 @@
 		"ORDER BY 2 DESC"
 #endif /* DEBUG END */
 
-#define BVF1_1 BVF1_statements[0].plan
+#define BVF1_1 (*BVF1_statements[0].plan)
 
 static MemoryContext BVF1_savedcxt = NULL;
 
@@ -204,7 +204,8 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		BVF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(BVF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLBVF1_1, broker_list_array,

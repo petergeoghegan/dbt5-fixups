@@ -69,12 +69,12 @@
 #endif /* End DEBUG */
 
 
-#define MWF1_1 MWF1_statements[0].plan
-#define MWF1_2 MWF1_statements[1].plan
-#define MWF1_3 MWF1_statements[2].plan
-#define MWF1_4 MWF1_statements[3].plan
-#define MWF1_5 MWF1_statements[4].plan
-#define MWF1_6 MWF1_statements[5].plan
+#define MWF1_1 (*MWF1_statements[0].plan)
+#define MWF1_2 (*MWF1_statements[1].plan)
+#define MWF1_3 (*MWF1_statements[2].plan)
+#define MWF1_4 (*MWF1_statements[3].plan)
+#define MWF1_5 (*MWF1_statements[4].plan)
+#define MWF1_6 (*MWF1_statements[5].plan)
 
 static cached_statement MWF1_statements[] = {
 
@@ -189,6 +189,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	TupleDesc tupdesc;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
+	MemoryContext savedcxt;
 
 	Datum result;
 
@@ -216,7 +217,8 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 			buf, starting_co_id);
 #endif
 
-	SPI_connect(); // BUG
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI connect failed");
 	plan_queries(MWF1_statements);
 #ifdef DEBUG
 	if (cust_id != 0) {
@@ -357,7 +359,11 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	elog(NOTICE, "MWF1 OUT: 1 %f", pct_change);
 #endif /* DEBUG */
 
-	SPI_finish();
+	savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(pct_change));
+	if (savedcxt) MemoryContextSwitchTo(savedcxt);
+
+	SPI_finish();
+
 	PG_RETURN_NUMERIC(result);
 }

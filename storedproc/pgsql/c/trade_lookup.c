@@ -125,23 +125,23 @@ PG_MODULE_MAGIC;
 		"      WHERE hh_t_id = %s)"
 #endif /* End DEBUG */
 
-#define TLF1_1 TLF1_statements[0].plan
-#define TLF1_2 TLF1_statements[1].plan
-#define TLF1_3 TLF1_statements[2].plan
-#define TLF1_4 TLF1_statements[3].plan
+#define TLF1_1 (*TLF1_statements[0].plan)
+#define TLF1_2 (*TLF1_statements[1].plan)
+#define TLF1_3 (*TLF1_statements[2].plan)
+#define TLF1_4 (*TLF1_statements[3].plan)
 
-#define TLF2_1 TLF2_statements[0].plan
-#define TLF2_2 TLF2_statements[1].plan
-#define TLF2_3 TLF2_statements[2].plan
-#define TLF2_4 TLF2_statements[3].plan
+#define TLF2_1 (*TLF2_statements[0].plan)
+#define TLF2_2 (*TLF2_statements[1].plan)
+#define TLF2_3 (*TLF2_statements[2].plan)
+#define TLF2_4 (*TLF2_statements[3].plan)
 
-#define TLF3_1 TLF3_statements[0].plan
-#define TLF3_2 TLF3_statements[1].plan
-#define TLF3_3 TLF3_statements[2].plan
-#define TLF3_4 TLF3_statements[3].plan
+#define TLF3_1 (*TLF3_statements[0].plan)
+#define TLF3_2 (*TLF3_statements[1].plan)
+#define TLF3_3 (*TLF3_statements[2].plan)
+#define TLF3_4 (*TLF3_statements[3].plan)
 
-#define TLF4_1 TLF4_statements[0].plan
-#define TLF4_2 TLF4_statements[1].plan
+#define TLF4_1 (*TLF4_statements[0].plan)
+#define TLF4_2 (*TLF4_statements[1].plan)
 
 static MemoryContext TLF1_savedcxt = NULL;
 static MemoryContext TLF2_savedcxt = NULL;
@@ -489,7 +489,8 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF1_statements);
 #ifdef DEBUG
 		dump_tlf1_inputs(max_trades, trade_id_p);
@@ -846,7 +847,8 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF2_statements);
 
 #ifdef DEBUG
@@ -1201,7 +1203,8 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF3_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF3_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTLF3_1, symbol, start_trade_dts, end_trade_dts,
@@ -1516,7 +1519,8 @@ Datum TradeLookupFrame4(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TLF4_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TLF4_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTLF4_1, acct_id, start_trade_dts);

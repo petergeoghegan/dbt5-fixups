@@ -47,8 +47,8 @@ PG_MODULE_MAGIC;
 		"  AND b_id = ca_b_id"
 #endif /* End DEBUG */
 
-#define TSF1_1 TSF1_statements[0].plan
-#define TSF1_2 TSF1_statements[1].plan
+#define TSF1_1 (*TSF1_statements[0].plan)
+#define TSF1_2 (*TSF1_statements[1].plan)
 
 static MemoryContext TSF1_savedcxt = NULL;
 
@@ -173,7 +173,8 @@ Datum TradeStatusFrame1(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		TSF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		SPI_connect();
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI connect failed");
 		plan_queries(TSF1_statements);
 #ifdef DEBUG
 		sprintf(sql, SQLTSF1_1, acct_id);
