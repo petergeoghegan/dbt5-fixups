@@ -8,6 +8,8 @@
 #               2010 Mark Wong
 #
 
+export PSQLRC=/dev/null
+
 LOGFILE="log"
 OUTDIR="."
 while getopts "fo:p:" OPT; do
