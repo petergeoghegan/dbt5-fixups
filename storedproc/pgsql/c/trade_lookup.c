@@ -399,7 +399,7 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 
 	int i, j;
 
-	long *trade_id;	
+	long *trade_id;
 
 	char **values = NULL;
 	enum tlf1 {
@@ -451,9 +451,9 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_cash_transaction_dts] = (char *) palloc(((MAXDATELEN + 1) *
 				max_trades + 2) * sizeof(char));
-		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 10) *
-				max_trades + 20) * sizeof(char));
-		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 10) *
+		values[i_cash_transaction_name] = (char *) palloc(((CT_NAME_LEN + 3) *
+				max_trades + 2) * sizeof(char));
+		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) *
 				max_trades + 2) * sizeof(char));
 		values[i_is_cash] = (char *) palloc(((BOOLEAN_LEN + 1) * max_trades +
 				2) * sizeof(char));
@@ -468,8 +468,8 @@ Datum TradeLookupFrame1(PG_FUNCTION_ARGS)
 				1) * max_trades + 2) * sizeof(char));
 		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 1) *
 				max_trades + 3) * 3 + 2) * sizeof(char));
-		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 10) *
-				max_trades + 30) * 3 + 2) * sizeof(char));
+		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN + 3) *
+				max_trades + 3) * 3 + 2) * sizeof(char));
 		values[i_trade_price] = (char *) palloc(((S_PRICE_T_LEN + 1) *
 				max_trades + 2) * sizeof(char));
 
