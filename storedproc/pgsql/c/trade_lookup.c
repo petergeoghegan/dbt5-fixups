@@ -801,10 +801,18 @@ Datum TradeLookupFrame2(PG_FUNCTION_ARGS)
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF2 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF2 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tlf2_inputs(acct_id, end_trade_dts, max_trades, start_trade_dts);
@@ -1145,12 +1153,20 @@ Datum TradeLookupFrame3(PG_FUNCTION_ARGS)
 		memset(nulls, 0, sizeof(nulls));
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
-
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF3 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF3 start_trade_dts_ts timestamp out of range")));
+
 		strncpy(symbol, DatumGetCString(DirectFunctionCall1(textout,
 				PointerGetDatum(symbol_p))), sizeof(symbol));
 		symbol[S_SYMB_LEN] = '\0';
@@ -1490,10 +1506,13 @@ Datum TradeLookupFrame4(PG_FUNCTION_ARGS)
 		HeapTuple tuple = NULL;
 
 		memset(nulls, 0, sizeof(nulls));
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL,
-				NULL) == 0) {
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TLF4 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		 dump_tlf4_inputs(acct_id, start_trade_dts);
