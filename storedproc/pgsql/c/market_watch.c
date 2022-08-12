@@ -282,7 +282,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			frame_index = 3;
 			args[0] = CStringGetTextDatum(symbol);
-			ret = SPI_execute_plan(MWF1_4, args, nulls, true, 0); // BUG
+			ret = SPI_execute_plan(MWF1_4, args, nulls, true, 0);
 
 			if (ret != SPI_OK_SELECT || SPI_processed == 0) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,
@@ -302,7 +302,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			frame_index = 4;
 			args[0] = CStringGetTextDatum(symbol);
-			ret = SPI_execute_plan(MWF1_5, args, nulls, true, 0); // BUG
+			ret = SPI_execute_plan(MWF1_5, args, nulls, true, 0);
 			if (ret != SPI_OK_SELECT) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,
 						industry_name, buf, starting_co_id);
@@ -322,7 +322,7 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 			args[0] = CStringGetTextDatum(symbol);
 			args[1] = DirectFunctionCall1(date_in,
 						CStringGetDatum(pstrdup(buf)));
-			ret = SPI_execute_plan(MWF1_6, args, nulls, true, 0); // BUG
+			ret = SPI_execute_plan(MWF1_6, args, nulls, true, 0);
 			if (ret != SPI_OK_SELECT) {
 				dump_mwf1_inputs(acct_id, cust_id, ending_co_id,
 						industry_name, buf, starting_co_id);

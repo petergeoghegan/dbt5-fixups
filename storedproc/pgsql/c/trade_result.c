@@ -1875,7 +1875,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	args[2] = DirectFunctionCall1(date_in, CStringGetDatum(due_date));
 	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 	args[4] = Float8GetDatum(se_amount);
-	ret = SPI_execute_plan(TRF6_1, args, nulls, false, 0); // triggers float8_numeric valgrind BUG
+	ret = SPI_execute_plan(TRF6_1, args, nulls, false, 0);
 	if (ret != SPI_OK_INSERT) {
 		FAIL_FRAME(TRF6_statements[0].sql);
 		dump_trf6_inputs(acct_id, due_date, text_to_cstring(s_name), se_amount, trade_dts,
