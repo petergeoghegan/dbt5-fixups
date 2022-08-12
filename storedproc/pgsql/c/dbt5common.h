@@ -9,6 +9,7 @@
 
 #ifndef _DBT5COMMON_H_
 #define _DBT5COMMON_H_
+/* #define DEBUG */
 #include "executor/spi.h"
 
 /*
