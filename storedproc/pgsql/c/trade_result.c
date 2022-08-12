@@ -1791,15 +1791,15 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	int trade_qty = PG_GETARG_INT32(7);
 	text       *type_name   = DatumGetTextPCopy(PG_GETARG_TEXT_P(8));
 
-	struct pg_tm tt, *tm = &tt;
-	fsec_t fsec;
+	struct pg_tm tt = {0}, *tm = &tt;
+	fsec_t fsec = 0;
 
-	int ret;
-	TupleDesc tupdesc;
+	int ret = 0;
+	TupleDesc tupdesc = NULL;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
 
-	Datum result;
+	Datum result = 0;
 	double se_amount = 0;
 #ifdef DEBUG
 	char sql[2048];
@@ -1814,6 +1814,9 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 
 	double acct_bal = 0;
 
+	memset(due_date, 0, sizeof(due_date));
+	memset(trade_dts, 0, sizeof(trade_dts));
+	memset(args, 0, sizeof(args));
 	memset(nulls, 0, sizeof(nulls));
 	memset(cash_type, 0, sizeof(cash_type));
 
