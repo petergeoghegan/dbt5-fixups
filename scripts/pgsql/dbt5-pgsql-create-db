@@ -7,6 +7,8 @@
 # Copyright (C) 2002-2010 Mark Wong & Open Source Development Labs, Inc.
 #
 
+export PSQLRC=/dev/null
+
 usage()
 {
 	echo "usage: create-db -h"
@@ -62,7 +64,7 @@ fi
 # Give the database a few seconds to get going
 sleep 4
 
-createdb ${PORTOPT} -E SQL_ASCII ${DBT5DBNAME} || exit 1
+createdb ${PORTOPT} -E UTF8 ${DBT5DBNAME} || exit 1
 # FIXME: Add a check for what version of PostgreSQL is being used and then
 # determine whether we need to run createland got plpgsql.
 #createlang ${PORTOPT} plpgsql ${DBT5DBNAME} || exit 1

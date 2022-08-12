@@ -21,7 +21,7 @@ trap 'echo "Test was interrupted. Got TERM signal."; \
 do_sleep()
 {
     echo "Sleeping $1 seconds"
-    sleep $1
+    sleep "$1"
 }
 
 make_directories()
@@ -31,11 +31,11 @@ make_directories()
 	if [ -n "${HOST}" ]; then
 		COMMAND="ssh ${HOST}"
 	fi
-	${COMMAND} mkdir -p ${OUTPUT_DIR}
-	${COMMAND} mkdir -p ${BH_OUTPUT_DIR}
-	${COMMAND} mkdir -p ${MEE_OUTPUT_DIR}
-	${COMMAND} mkdir -p ${DRIVER_OUTPUT_DIR}
-	${COMMAND} mkdir -p ${DB_OUTPUT_DIR}
+	${COMMAND} mkdir -p "${OUTPUT_DIR}"
+	${COMMAND} mkdir -p "${BH_OUTPUT_DIR}"
+	${COMMAND} mkdir -p "${MEE_OUTPUT_DIR}"
+	${COMMAND} mkdir -p "${DRIVER_OUTPUT_DIR}"
+	${COMMAND} mkdir -p "${DB_OUTPUT_DIR}"
 }
 
 oprofile_annotate()
@@ -410,7 +410,7 @@ fi
 date >> ${OUTPUT_DIR}/readme.txt
 echo "${COMMENT}" >> ${OUTPUT_DIR}/readme.txt
 uname -a >> ${OUTPUT_DIR}/readme.txt
-echo "Command line: $0 $@" >> ${OUTPUT_DIR}/readme.txt
+echo "Command line: $0 $*" >> ${OUTPUT_DIR}/readme.txt
 
 # Output run information into the readme.txt.
 echo "Database Scale Factor: ${SCALE_FACTOR}" >> ${OUTPUT_DIR}/readme.txt
@@ -517,7 +517,6 @@ DriverMain -c ${CUSTOMERS_INSTANCE} -t ${CUSTOMERS_TOTAL} \
 		-u ${USERS} -n ${PACING_DELAY} ${SEEDARG} \
 		-i ${EGENDIR}/flat_in \
 		-o ${DRIVER_OUTPUT_DIR} > ${DRIVER_OUTPUT_DIR}/driver.out 2>&1 &
-DCMPID=`ps -C DriverMain -o pid=`
 echo "Results will be written to: $OUTPUT_DIR"
 
 do_sleep ${SLEEP_RAMPUP}
@@ -555,11 +554,6 @@ fi
 
 # Sleep for the duration of the run.
 do_sleep $DURATION
-
-# Wait for DriverMain to exit
-#if [ -n ${DCMPID} ]; then
-	#wait ${DCMPID}
-#fi
 
 # Collect profile data.
 if [ ${USE_READPROFILE} -eq 1 ]; then

@@ -8,6 +8,7 @@
 #               2006 Rilson Nascimento
 #
 
+export PSQLRC=/dev/null
 USE_TABLESPACES=0
 while getopts "d:p:t" OPT; do
 	case ${OPT} in

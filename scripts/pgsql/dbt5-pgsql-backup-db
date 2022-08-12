@@ -7,6 +7,8 @@
 # Copyright (C) 2002-2010 Mark Wong & Open Source Development Lab, Inc.
 #
 
+export PSQLRC=/dev/null
+
 if [ "x${DBT5DBNAME}" = "x" ]; then
 	echo "DBT5DBNAME not defined."
 	exit 1
