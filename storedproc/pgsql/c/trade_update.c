@@ -913,33 +913,36 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings, which will
 		 * be processed later by the type input functions.
 		 * Don't forget to factor in commas (,) and braces ({}) for the arrays.
+		 *
+		 * XXX at least Valgrind complained about i_trade_history_dts, so the
+		 * buffer sizes were increased in a scattergun fashion.
 		 */
 		values = (char **) palloc(sizeof(char *) * 15);
 		values[i_bid_price] =
-				(char *) palloc(((S_PRICE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((S_PRICE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_amount] =
-				(char *) palloc(((VALUE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((VALUE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_dts] =
-				(char *) palloc(((MAXDATELEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((MAXDATELEN + 1) * 40 + 2) * sizeof(char));
 		values[i_cash_transaction_name] =
-				(char *) palloc(((CT_NAME_LEN + 3) * 20 + 2) * sizeof(char));
+				(char *) palloc(((CT_NAME_LEN + 3) * 40 + 2) * sizeof(char));
 		values[i_exec_name] = (char *) palloc(((T_EXEC_NAME_LEN + 3) * 20 +
 				2) * sizeof(char));
 		values[i_is_cash] =
-				(char *) palloc(((SMALLINT_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((SMALLINT_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_num_found] = (char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_num_updated] =
 				(char *) palloc((INTEGER_LEN + 1) * sizeof(char));
 		values[i_settlement_amount] =
-				(char *) palloc(((VALUE_T_LEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((VALUE_T_LEN + 1) * 40 + 2) * sizeof(char));
 		values[i_settlement_cash_due_date] =
-				(char *) palloc(((MAXDATELEN + 1) * 20 + 2) * sizeof(char));
+				(char *) palloc(((MAXDATELEN + 1) * 40 + 2) * sizeof(char));
 		values[i_settlement_cash_type] = (char *) palloc(((SE_CASH_TYPE_LEN +
 				3) * 20 + 2) * sizeof(char));
 		values[i_trade_history_dts] = (char *) palloc((((MAXDATELEN + 2) * 3
-				+ 2) * 20 + 5) * sizeof(char));
+				+ 2) * 40 + 5) * sizeof(char));
 		values[i_trade_history_status_id] = (char *) palloc((((ST_ID_LEN +
-				2) * 3 + 2) * 20 + 5) * sizeof(char));
+				2) * 3 + 2) * 40 + 5) * sizeof(char));
 		values[i_trade_list] =
 				(char *) palloc(((BIGINT_LEN + 1) * 20 + 2) * sizeof(char));
 		values[i_trade_price] =
@@ -951,7 +954,6 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 
 		/* switch to memory context appropriate for multiple function calls */
 		TUF2_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
 		if (SPI_connect() != SPI_OK_CONNECT)
 			elog(ERROR, "SPI connect failed");
 		plan_queries(TUF2_statements);
