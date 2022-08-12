@@ -898,10 +898,18 @@ Datum TradeUpdateFrame2(PG_FUNCTION_ARGS)
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) ==
-				0) {
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF2 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF2 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tuf2_inputs(acct_id, end_trade_dts, max_trades, max_updates,
@@ -1320,10 +1328,18 @@ Datum TradeUpdateFrame3(PG_FUNCTION_ARGS)
 		if (timestamp2tm(end_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, end_trade_dts);
 		}
-		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) ==
-				0) {
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF3 end_trade_dts_ts timestamp out of range")));
+
+		if (timestamp2tm(start_trade_dts_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 			EncodeDateTime(tm, fsec, false, 0, tzn, USE_ISO_DATES, start_trade_dts);
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("TUF3 start_trade_dts_ts timestamp out of range")));
 
 #ifdef DEBUG
 		dump_tuf3_inputs(end_trade_dts, max_acct_id, max_trades, max_updates,
