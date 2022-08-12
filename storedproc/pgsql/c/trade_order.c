@@ -1225,13 +1225,17 @@ Datum TradeOrderFrame3(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 			ret = SPI_execute_plan(TOF3_11, args, nulls, true, 0);
 			if (ret == SPI_OK_SELECT) {
+				char *val = NULL;
 				tupdesc = SPI_tuptable->tupdesc;
 				tuptable = SPI_tuptable;
 				if (SPI_processed > 0) {
 					tuple = tuptable->vals[0];
+					val = SPI_getvalue(tuple, tupdesc, 1);
+				}
+				if (SPI_processed > 0 && val) {
+					tuple = tuptable->vals[0];
 					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
-							 "%8.2f",
-							 atof(SPI_getvalue(tuple, tupdesc, 1)) * acct_bal); // NEW BUG
+							 "%8.2f", atof(val) * acct_bal);
 				} else {
 					snprintf(values[i_cust_assets], (S_PRICE_T_LEN + 1) * sizeof(char),
 							 "%8.2f", acct_bal);
