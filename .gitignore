@@ -1,6 +1,5 @@
 *.o
 *.so
-*.Po
 
 # vim
 *.swp
