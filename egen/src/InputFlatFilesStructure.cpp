@@ -50,7 +50,7 @@ namespace TPCE
 bool CInputFiles::Initialize(eDriverType eType, TIdent iConfiguredCustomerCount, TIdent iActiveCustomerCount, const char *szPathName)
 {
     eOutputVerbosity eOutput = (eType == eDriverEGenLoader) ? eOutputVerbose : eOutputQuiet;
-    char    szFileName[iMaxPath];
+    char    szFileName[iMaxPath + 1];
     char    *pStartInFileName;  // start of the filename part in the szFileName buffer
     size_t iDirLen;
     size_t iFileNameMaxLen;
@@ -66,7 +66,7 @@ bool CInputFiles::Initialize(eDriverType eType, TIdent iConfiguredCustomerCount,
     iDirLen = strlen( szFileName );
     pStartInFileName = (char *)&szFileName[iDirLen];
     if (*pStartInFileName != '/' && *pStartInFileName != '\\') {
-        strncat(szFileName, "/", sizeof(szFileName));
+        strncat(szFileName, "/", iMaxPath);
         pStartInFileName++;
         iDirLen++;
     }
