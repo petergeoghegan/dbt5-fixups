@@ -1820,7 +1820,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	memset(nulls, 0, sizeof(nulls));
 	memset(cash_type, 0, sizeof(cash_type));
 
-	TRF6_savedcxt = MemoryContextSwitchTo(memctx);
 	se_amount = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(se_amount_num)));
 
@@ -1834,8 +1833,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 													   PointerGetDatum(s_name),
 													   CStringGetTextDatum("'"),
 													   CStringGetTextDatum("\\'")));
-
-	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
