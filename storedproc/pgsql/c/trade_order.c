@@ -677,6 +677,8 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	text       *exec_f_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(1));
 	text       *exec_l_name = DatumGetTextPCopy(PG_GETARG_TEXT_P(2));
 	text       *exec_tax_id = DatumGetTextPCopy(PG_GETARG_TEXT_P(3));
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 
 	int ret;
 	text *res;
@@ -737,7 +739,7 @@ Datum TradeOrderFrame2(PG_FUNCTION_ARGS)
 	elog(NOTICE, "TOF2 OUT: 1 %s", ap_acl);
 #endif /* DEBUG */
 
-	TOF2_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
+	TOF2_savedcxt = MemoryContextSwitchTo(per_query_ctx);
 	res = cstring_to_text_with_len(ap_acl, AP_ACL_LEN);
 	if (TOF2_savedcxt) MemoryContextSwitchTo(TOF2_savedcxt);
 
