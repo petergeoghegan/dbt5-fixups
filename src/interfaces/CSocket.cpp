@@ -109,10 +109,11 @@ int CSocket::dbt5Receive(void *data, int length)
 	char *szData = NULL;
 	do {
 		errno = 0;
-		received = recv(m_sockfd, data, remaining, 0);
-		if (received == -1) {
-			if (errno == EAGAIN)
-				continue;
+		received = recv(m_sockfd, data, remaining, MSG_WAITALL);
+		if (received == -1 && errno == EAGAIN) {
+			received = 0;
+		}
+		else if (received == -1) {
 			throwError(CSocketErr::ERR_SOCKET_RECV);
 		} else if (received == 0) {
 			throwError(CSocketErr::ERR_SOCKET_CLOSED);
