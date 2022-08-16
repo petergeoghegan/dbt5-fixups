@@ -10,7 +10,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
 #include <unistd.h>
+#include <stdexcept>
 
 #include "CSocket.h"
 #include "CThreadErr.h"
@@ -60,7 +62,11 @@ void CSocket::dbt5Connect()
 	errno = 0;
 	m_sockfd = socket(AF_INET, SOCK_STREAM, resolveProto("tcp"));
 	if (m_sockfd == -1) {
-		throwError(CSocketErr::ERR_SOCKET_CREATE);
+		std::stringstream foo;
+		foo << "errno: " << errno;
+		throw std::runtime_error(foo.str().c_str());
+
+		/* throwError(CSocketErr::ERR_SOCKET_CREATE); */
 	}
 
 	struct sockaddr_in sa;
