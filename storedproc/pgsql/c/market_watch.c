@@ -189,7 +189,6 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	TupleDesc tupdesc;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
-	MemoryContext memctx = CurrentMemoryContext;
 	MemoryContext savedcxt;
 
 	Datum result;
@@ -356,13 +355,13 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG                                                                    
 	elog(NOTICE, "MWF1 OUT: 1 %f", pct_change);
 #endif /* DEBUG */
 
-	savedcxt = MemoryContextSwitchTo(memctx);
+	savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(pct_change));
-	MemoryContextSwitchTo(savedcxt);
+	if (savedcxt) MemoryContextSwitchTo(savedcxt);
 
 	SPI_finish();
 

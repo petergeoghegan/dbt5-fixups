@@ -1789,7 +1789,6 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	int trade_is_cash = PG_GETARG_INT16(6);
 	int trade_qty = PG_GETARG_INT32(7);
 	text       *type_name   = DatumGetTextPCopy(PG_GETARG_TEXT_P(8));
-	MemoryContext memctx = CurrentMemoryContext;
 
 	struct pg_tm tt = {0}, *tm = &tt;
 	fsec_t fsec = 0;
@@ -1820,6 +1819,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 	memset(nulls, 0, sizeof(nulls));
 	memset(cash_type, 0, sizeof(cash_type));
 
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	se_amount = DatumGetFloat8(DirectFunctionCall1(
 			numeric_float8_no_overflow, PointerGetDatum(se_amount_num)));
 
@@ -1833,6 +1833,8 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 													   PointerGetDatum(s_name),
 													   CStringGetTextDatum("'"),
 													   CStringGetTextDatum("\\'")));
+
+	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 
 	if (timestamp2tm(due_date_ts, NULL, tm, &fsec, NULL, NULL) == 0) {
 		EncodeDateTime(tm, fsec, false, 0, NULL, USE_ISO_DATES, due_date);
@@ -1872,7 +1874,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 #endif /* DEBUG */
 	args[0] = Int64GetDatum(trade_id);
 	args[1] = CStringGetTextDatum(cash_type);
-	TRF6_savedcxt = MemoryContextSwitchTo(memctx);
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	args[2] = DirectFunctionCall1(date_in, CStringGetDatum(due_date));
 	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 	args[4] = Float8GetDatum(se_amount);
@@ -1939,7 +1941,7 @@ Datum TradeResultFrame6(PG_FUNCTION_ARGS)
 		elog(NOTICE, "TRF6 OUT: 1 %f", acct_bal);
 #endif /* DEBUG */
 
-	TRF6_savedcxt = MemoryContextSwitchTo(memctx);
+	TRF6_savedcxt = MemoryContextSwitchTo(TopMemoryContext);
 	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(acct_bal));
 	if (TRF6_savedcxt) MemoryContextSwitchTo(TRF6_savedcxt);
 
