@@ -977,7 +977,7 @@ ON security (s_co_id, s_issue);
 
 psql ${PORTARG} -e ${DBNAMEARG} -c "
 CREATE INDEX i_holding
-ON holding (h_ca_id, h_s_symb);
+ON holding (h_ca_id, h_s_symb, h_dts);
 " & pids="$pids $!"
 
 psql ${PORTARG} -e ${DBNAMEARG} -c "
