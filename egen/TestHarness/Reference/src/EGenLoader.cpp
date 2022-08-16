@@ -56,7 +56,7 @@ bool                bGenerateFixedTables = false;
 bool                bGenerateGrowingTables = false;
 bool                bGenerateScalingTables = false;
 
-char                szInDir[iMaxPath];
+char                szInDir[iMaxPath + 1];
 #ifdef COMPILE_FLAT_FILE_LOAD
 char                szOutDir[iMaxPath];
 FlatFileOutputModes     FlatFileOutputMode;

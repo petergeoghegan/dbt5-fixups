@@ -71,7 +71,7 @@ const TTrade iTTradeShift = INT64_CONST(200000000000000);  // 200 trillion (2 * 
 
 const int       iMaxHostname = 64;
 const int       iMaxDBName = 64;
-const int       iMaxPath = 512;
+const int       iMaxPath = 4096;
 
 // NOTE: Changing the initial trade populate base date
 // can break code used in CCETxnInputGenerator for generating
