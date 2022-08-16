@@ -184,6 +184,12 @@ void CSocket::dbt5Listen(const int port)
 		throwError(CSocketErr::ERR_SOCKET_CREATE);
 	}
 
+	const int enable = 1;
+	if (setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+		throwError(CSocketErr::ERR_SOCKET_BIND);
+	if (setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
+		throwError(CSocketErr::ERR_SOCKET_BIND);
+
 	bzero(&sa, sizeof(sa));
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_ANY);
