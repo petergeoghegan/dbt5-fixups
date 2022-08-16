@@ -171,8 +171,6 @@ void dump_mwf1_inputs(long acct_id, long cust_id, long ending_co_id,
 Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 {
 	int i;
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext per_query_ctx;
 
 	int status = 0;
 	double old_mkt_cap = 0.0;
@@ -191,7 +189,6 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	TupleDesc tupdesc;
 	SPITupleTable *tuptable = NULL;
 	HeapTuple tuple = NULL;
-	MemoryContext savedcxt;
 
 	Datum result;
 
@@ -209,8 +206,6 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	j2date(start_date_p + POSTGRES_EPOCH_JDATE,
 	   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 	EncodeDateOnly(tm, DateStyle, buf);
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 
 	strncpy(industry_name, DatumGetCString(DirectFunctionCall1(textout,
 															   PointerGetDatum(industry_name_p))),
@@ -363,11 +358,9 @@ Datum MarketWatchFrame1(PG_FUNCTION_ARGS)
 	elog(NOTICE, "MWF1 OUT: 1 %f", pct_change);
 #endif /* DEBUG */
 
-	savedcxt = MemoryContextSwitchTo(per_query_ctx);
-	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(pct_change));
-	if (savedcxt) MemoryContextSwitchTo(savedcxt);
-
 	SPI_finish();
+
+	result = DirectFunctionCall1(float8_numeric, Float8GetDatum(pct_change));
 
 	PG_RETURN_NUMERIC(result);
 }
