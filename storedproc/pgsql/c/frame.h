@@ -14,14 +14,12 @@
 	do { \
 		elog(WARNING, "DBT5: UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
 				__FILE__, __LINE__, sql); \
-		Assert(false); \
 	} while (0)
 #define FAIL_FRAME_SET(rows, sql) \
 	do { \
 		elog(WARNING, "DBT5: UNEXPECTED EXECUTION RESULT: %s %d\n%s", \
 				__FILE__, __LINE__, sql); \
 		*rows = 0; \
-		Assert(false); \
 	} while (0)
 
 /* PostgreSQL types */
