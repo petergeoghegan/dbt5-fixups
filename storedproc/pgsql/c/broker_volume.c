@@ -42,8 +42,6 @@
 
 #define BVF1_1 (*BVF1_statements[0].plan)
 
-static MemoryContext BVF1_savedcxt = NULL;
-
 static cached_statement BVF1_statements[] =
 {
 	/* BVF1_1 */
@@ -201,9 +199,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		funcctx->max_calls = 1;
 
-		/* switch to memory context appropriate for multiple function calls */
-		BVF1_savedcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
 		if (SPI_connect() != SPI_OK_CONNECT)
 			elog(ERROR, "SPI connect failed");
 		plan_queries(BVF1_statements);
@@ -273,8 +268,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 		 */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
-
-		MemoryContextSwitchTo(BVF1_savedcxt);
 	}
 
 	/* stuff done on every call of the function */
@@ -305,7 +298,6 @@ Datum BrokerVolumeFrame1(PG_FUNCTION_ARGS)
 	} else {
 		/* Do when there is no more left. */
 		SPI_finish();
-		if (BVF1_savedcxt) MemoryContextSwitchTo(BVF1_savedcxt);
 		SRF_RETURN_DONE(funcctx);
 	}
 }
