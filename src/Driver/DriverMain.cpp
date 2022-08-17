@@ -213,7 +213,13 @@ bool ValidateParameters()
 int main(int argc, char *argv[])
 {
 	// Establish defaults for command line options
+	memset(szBHaddr, 0, iMaxHostname  + 1);
+	memset(szInDir, 0, iMaxPath + 1);
+	memset(outputDirectory, 0, iMaxPath + 1);
+
+	strncpy(szBHaddr, "localhost", iMaxHostname);
 	strncpy(szInDir, "flat_in", iMaxPath);
+	strncpy(outputDirectory, ".", iMaxPath);
 
 	cout << "dbt5 - Driver Customer Emulator Main" << endl;
 

@@ -25,6 +25,8 @@ CDriver::CDriver(char *szInDir,
 		char *outputDirectory)
 {
 	char filename[iMaxPath + 1];
+	memset(filename, 0, iMaxPath + 1);
+
 	snprintf(filename, iMaxPath, "%s/Driver.log", outputDirectory);
 	m_pLog = new CEGenLogger(eDriverEGenLoader, 0, filename, &m_fmt);
 	m_pDriverCETxnSettings = new TDriverCETxnSettings;
@@ -36,6 +38,7 @@ CDriver::CDriver(char *szInDir,
 	snprintf(filename, iMaxPath, "%s/%s", outputDirectory, CE_MIX_LOG_NAME);
 	m_fMix.open(filename, ios::out);
 
+	memset(this->szInDir, 0, iMaxPath + 1);
 	strncpy(this->szInDir, szInDir, iMaxPath);
 	this->szInDir[iMaxPath] = '\0';
 	this->iConfiguredCustomerCount = iConfiguredCustomerCount;
@@ -43,11 +46,13 @@ CDriver::CDriver(char *szInDir,
 	this->iScaleFactor = iScaleFactor;
 	this->iDaysOfInitialTrades = iDaysOfInitialTrades;
 	this->iSeed = iSeed;
+	memset(this->szBHaddr, 0, iMaxHostname + 1);
 	strncpy(this->szBHaddr, szBHaddr, iMaxHostname);
 	this->szBHaddr[iMaxHostname] = '\0';
 	this->iBHlistenPort = iBHlistenPort;
 	this->iUsers = iUsers;
 	this->iPacingDelay = iPacingDelay;
+	memset(this->outputDirectory, 0, iMaxPath + 1);
 	strncpy(this->outputDirectory, outputDirectory, iMaxPath);
 	this->outputDirectory[iMaxPath] = '\0';
 	//
