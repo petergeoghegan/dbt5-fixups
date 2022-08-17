@@ -23,11 +23,30 @@ void *MarketWorkerThread(void* data)
 
 	do {
 		try {
-			sockDrv.dbt5Receive(reinterpret_cast<void*>(pMessage),
-					sizeof(TTradeRequest));
+			try {
+				sockDrv.dbt5Receive(reinterpret_cast<void*>(pMessage),
+						sizeof(TTradeRequest));
+				} catch (std::exception &e) {
+					sockDrv.dbt5Disconnect(); // close connection
+
+					pThrParam->pMarketExchange->logErrorMessage("error inner block trevor");
+
+					// The socket has been closed, break and let this thread die.
+					break;
+				}
 	
 			// submit trade request
 			pThrParam->pMarketExchange->m_pCMEE->SubmitTradeRequest(pMessage);
+		} catch(std::runtime_error& err) {
+				sockDrv.dbt5Disconnect(); // close connection
+
+				ostringstream osErr;
+				osErr << "Error on Receive: " << err.what() <<
+						" at BrokerageHouse::workerThread" << endl;
+				pThrParam->pMarketExchange->logErrorMessage(osErr.str());
+
+				// The socket has been closed, break and let this thread die.
+				break;
 		} catch(CSocketErr *pErr) {
 			sockDrv.dbt5Disconnect(); // close connection
 
@@ -40,7 +59,16 @@ void *MarketWorkerThread(void* data)
 
 			// The socket is closed, break and let this thread die.
 			break;
+		} catch (std::exception &e) {
+			sockDrv.dbt5Disconnect(); // close connection
+
+			pThrParam->pMarketExchange->logErrorMessage("error whatever trevor");
+
+			// The socket has been closed, break and let this thread die.
+			break;
 		}
+
+
 	} while (true);
 
 	delete pMessage;
@@ -60,14 +88,14 @@ void EntryMarketWorkerThread(void *data)
 		// initialize the attribute object
 		int status = pthread_attr_init(&threadAttribute);
 		if (status != 0) {
-			throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_INIT);
+			throw std::runtime_error("pthread_attr_init failed");
 		}
 	
 		// set the detachstate attribute to detached
 		status = pthread_attr_setdetachstate(&threadAttribute,
 				PTHREAD_CREATE_DETACHED);
 		if (status != 0) {
-			throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_DETACH);
+			throw std::runtime_error("pthread_attr_setdetachstate failed");
 		}
 	
 		// create the thread in the detached state
@@ -75,7 +103,8 @@ void EntryMarketWorkerThread(void *data)
 				&MarketWorkerThread, data);
 	
 		if (status != 0) {
-			throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE);
+			throw std::runtime_error("pthread_create failed");
+			/* throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE); */
 		}
 	} catch(CThreadErr *pErr) {
 		// close recently accepted connection, to release threads
