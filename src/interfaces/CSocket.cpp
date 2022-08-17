@@ -50,12 +50,8 @@ int CSocket::dbt5Accept(void)
 	socklen_t addrlen = sizeof(sa);
 	errno = 0;
 	m_sockfd = accept(m_listenfd, (struct sockaddr *) &sa, &addrlen);
-
 	if (m_sockfd == -1) {
-		std::stringstream foo;
-		foo << "errno from CSocket::dbt5Accept: " << errno;
-		throw std::runtime_error(foo.str().c_str());
-		/* throwError(CSocketErr::ERR_SOCKET_ACCEPT); */
+		throwError(CSocketErr::ERR_SOCKET_ACCEPT);
 	}
 	return m_sockfd;
 }
@@ -67,7 +63,7 @@ void CSocket::dbt5Connect()
 	m_sockfd = socket(AF_INET, SOCK_STREAM, resolveProto("tcp"));
 	if (m_sockfd == -1) {
 		std::stringstream foo;
-		foo << "errno from CSocket::dbt5Connect: " << errno;
+		foo << "errno: " << errno;
 		throw std::runtime_error(foo.str().c_str());
 
 		/* throwError(CSocketErr::ERR_SOCKET_CREATE); */
@@ -160,15 +156,9 @@ int CSocket::dbt5Send(void *data, int length)
 		sent = send(m_sockfd, (void*)data, remaining, 0);
 
 		if (sent == -1) {
-			std::stringstream foo;
-			foo << "errno from CSocket::dbt5Send with -1: " << errno;
-			throw std::runtime_error(foo.str().c_str());
-			/* throwError(CSocketErr::ERR_SOCKET_SEND); */
+			throwError(CSocketErr::ERR_SOCKET_SEND);
 		} else if (sent == 0) {
-			std::stringstream foo;
-			foo << "errno from CSocket::dbt5Send with 0: " << errno;
-			throw std::runtime_error(foo.str().c_str());
-			/* throwError(CSocketErr::ERR_SOCKET_CLOSED); */
+			throwError(CSocketErr::ERR_SOCKET_CLOSED);
 		}
 
 		szData = reinterpret_cast<char*>(data);
@@ -213,10 +203,7 @@ void CSocket::dbt5Listen(const int port)
 
 	errno = 0;
 	if (listen(m_listenfd, LISTENQ) < 0) {
-		std::stringstream foo;
-		foo << "errno from CSocket::dbt5Listen on listen(): " << errno;
-		throw std::runtime_error(foo.str().c_str());
-		/* throwError(CSocketErr::ERR_SOCKET_LISTEN); */
+		throwError(CSocketErr::ERR_SOCKET_LISTEN);
 	}
 }
 

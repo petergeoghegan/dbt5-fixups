@@ -54,13 +54,8 @@ bool RunTradeResultAsync(void *data)
 	
 		// create the thread in the detached state - Call Trade Result
 		// asyncronously
-		for (;;)
-		{
-			status = pthread_create(&threadID, &threadAttribute, &TradeResultAsync,
-					data);
-			if (status == 0)
-				break;
-		}
+		status = pthread_create(&threadID, &threadAttribute, &TradeResultAsync,
+				data);
 
 		if (status != 0) {
 			throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE);
@@ -71,13 +66,6 @@ bool RunTradeResultAsync(void *data)
 				" at MEESUT::RunTradeResultAsync" << endl;
 		pThrParam->pCMEESUT->logErrorMessage(osErr.str());
 		delete pErr;
-		return false;
-	}
-	catch (std::exception &e)
-	{
-		ostringstream osErr;
-		osErr << "Error: fffffffff fdsjkfjskdjf" << endl;
-		pThrParam->pCMEESUT->logErrorMessage(osErr.str());
 		return false;
 	}
 
@@ -131,31 +119,23 @@ bool RunMarketFeedAsync(void *data)
 		// initialize the attribute object
 		int status = pthread_attr_init(&threadAttribute);
 		if (status != 0) {
-			throw std::runtime_error("pthread_attr_init failed");
-			/* throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_INIT); */
+			throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_INIT);
 		}
 	
 		// set the detachstate attribute to detached
 		status = pthread_attr_setdetachstate(&threadAttribute,
 				PTHREAD_CREATE_DETACHED);
 		if (status != 0) {
-			throw std::runtime_error("pthread_attr_setdetachstate failed");
-			/* throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_DETACH); */
+			throw new CThreadErr(CThreadErr::ERR_THREAD_ATTR_DETACH);
 		}
 	
 		// create the thread in the detached state - Call Trade Result
 		// asyncronously
-		for (;;)
-		{
-			status = pthread_create(&threadID, &threadAttribute, &MarketFeedAsync,
-					data);
-			if (status == 0)
-				break;
-			/* if (status != 0) { */
-			/* 	ostringstream osErr; */
-			/* 	osErr << "pthread_create failed: " << status; */
-			/* 	throw std::runtime_error(osErr.str()); */
-			/* } */
+		status = pthread_create(&threadID, &threadAttribute, &MarketFeedAsync,
+				data);
+
+		if (status != 0) {
+			throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE);
 		}
 	} catch(CThreadErr *pErr) {
 		ostringstream osErr;
