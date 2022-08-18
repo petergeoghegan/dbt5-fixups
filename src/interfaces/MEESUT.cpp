@@ -54,8 +54,14 @@ bool RunTradeResultAsync(void *data)
 	
 		// create the thread in the detached state - Call Trade Result
 		// asyncronously
-		status = pthread_create(&threadID, &threadAttribute, &TradeResultAsync,
-				data);
+		for (;;)
+		{
+			status = pthread_create(&threadID, &threadAttribute,
+									&TradeResultAsync, data);
+			if (status == 0)
+				break;
+			usleep(1000 * 5) ;
+		}
 
 		if (status != 0) {
 			throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE);
@@ -136,11 +142,13 @@ bool RunMarketFeedAsync(void *data)
 	
 		// create the thread in the detached state - Call Trade Result
 		// asyncronously
-		status = pthread_create(&threadID, &threadAttribute, &MarketFeedAsync,
-				data);
-
-		if (status != 0) {
-			throw new CThreadErr(CThreadErr::ERR_THREAD_CREATE);
+		for (;;)
+		{
+			status = pthread_create(&threadID, &threadAttribute,
+									&MarketFeedAsync, data);
+			if (status == 0)
+				break;
+			usleep(1000 * 5) ;
 		}
 	} catch(CThreadErr *pErr) {
 		ostringstream osErr;
