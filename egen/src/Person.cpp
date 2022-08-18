@@ -52,6 +52,8 @@ CPerson::CPerson(CInputFiles inputFiles
     , m_MaleFirstNames(inputFiles.MaleFirstNames)
     , m_FemaleFirstNames(inputFiles.FemaleFirstNames)
     , m_bCacheEnabled(bCacheEnabled)
+    , m_iCacheSize(0)
+    , m_iCacheOffset(0)
 {
     if (m_bCacheEnabled)
     {
