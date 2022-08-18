@@ -59,7 +59,7 @@ bool                bGenerateUsingCache = true;
 
 char                szInDir[iMaxPath + 1];
 #ifdef COMPILE_FLAT_FILE_LOAD
-char                szOutDir[iMaxPath];
+char                szOutDir[iMaxPath + 1];
 FlatFileOutputModes     FlatFileOutputMode;
 #endif
 #ifdef COMPILE_ODBC_LOAD
@@ -199,7 +199,7 @@ char  *vp;
           strncpy(szInDir, vp, sizeof(szInDir));
           if(( '/' != szInDir[ strlen(szInDir) - 1 ] ) && ( '\\' != szInDir[ strlen(szInDir) - 1 ] ))
           {
-              strncat( szInDir, "/", sizeof(szInDir) );
+              strncat( szInDir, "/", iMaxPath);
           }
           break;
 
@@ -255,7 +255,7 @@ char  *vp;
           strncpy(szOutDir, vp, sizeof(szOutDir));
           if(( '/' != szOutDir[ strlen(szOutDir) - 1 ] ) && ( '\\' != szOutDir[ strlen(szOutDir) - 1 ] ))
           {
-              strncat( szOutDir, "/", sizeof(szOutDir) );
+              strncat( szOutDir, "/", iMaxPath );
           }
           break;
 #endif
