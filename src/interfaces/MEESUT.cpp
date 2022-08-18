@@ -82,6 +82,7 @@ bool CMEESUT::TradeResult(PTradeResultTxnInput pTxnInput)
 	memcpy(&(pThrParam->TxnInput.m_TradeResultTxnInput), pTxnInput,
 			sizeof(TTradeResultTxnInput));
 
+	// XXX Use different lock?
 	pThrParam->pCMEESUT->m_SocketLock.lock();
 	bool result = RunTradeResultAsync(reinterpret_cast<void *>(pThrParam));
 	pThrParam->pCMEESUT->m_SocketLock.lock();
@@ -163,6 +164,7 @@ bool CMEESUT::MarketFeed(PMarketFeedTxnInput pTxnInput)
 	memcpy(&(pThrParam->TxnInput.m_MarketFeedTxnInput), pTxnInput,
 			sizeof(TMarketFeedTxnInput));
 
+	// XXX Use different lock?
 	pThrParam->pCMEESUT->m_SocketLock.lock();
 	bool result = RunMarketFeedAsync(reinterpret_cast<void *>(pThrParam));
 	pThrParam->pCMEESUT->m_SocketLock.lock();
