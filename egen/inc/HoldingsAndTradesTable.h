@@ -114,6 +114,10 @@ public:
         : m_rnd(RNGSeedTableDefault)
         , m_CustomerAccountTable(inputFiles, iLoadUnitSize, iCustomerCount, iStartFromCustomer, bCacheEnabled)
         , m_bCacheEnabled(bCacheEnabled)
+        , m_iCacheSizeNS(0)
+        , m_iCacheOffsetNS(0)
+        , m_iCacheOffsetSFFI(0)
+        , m_iCacheSizeSFFI(0)
     {
         m_iSecCount = inputFiles.Securities->GetConfiguredSecurityCount();
 
