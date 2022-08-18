@@ -1,0 +1,15 @@
+g++
+%cpp -std=c++98
+%c %cpp -pthread
+%h -x
+%h c++-header
+# --gcc-toolchain=/usr
+-I/home/pg/code/dbt5/egen/inc
+-I/mnt/970pro/patch/install/include
+-D_LARGEFILE64_SOURCE
+-D__STDC_FORMAT_MACROS
+-D__STDC_CONSTANT_MACROS
+-std=c++98
+-I/home/pg/code/dbt5/src/include
+#/usr/bin/c++   -I/home/pg/code/dbt5/egen/inc -D_LARGEFILE64_SOURCE -I/home/pg/code/dbt5/src/include -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -std=c++98 -g -Wall -I/mnt/970pro/patch/install/include -MD -MT CMakeFiles/BrokerageHouseMain.dir/src/tran
+#/usr/bin/c++   -I/home/pg/code/dbt5/egen/inc -D_LARGEFILE64_SOURCE -I/home/pg/code/dbt5/src/include -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -std=c++98 -g -Wall -MD -MT CMakeFiles/DriverMain.dir/src/Driver/Driver.cpp.o -MF CMakeFiles/DriverMain.dir/src/Driver/Driver.cpp.o.d -o CMakeFiles/DriverMain.dir/src/Driver/Driver.cpp.o -c /home/pg/code/dbt5/src/Driver/Driver.cpp
