@@ -58,7 +58,7 @@ int                 iScaleFactor = 500;                                   // # o
 int                 iDaysOfInitialTrades = 300;
 
 char                szRefInDir[RefTPCE::iMaxPath] = "../Reference/flat_in/";
-char                szInDir[TPCE::iMaxPath] = "../../flat_in/";
+char                szInDir[TPCE::iMaxPath + 1] = "../../flat_in/";
 
 eTestSuite          iTestSuite = eTestSuiteAll; // Test suite number (0 means run all suites)
 

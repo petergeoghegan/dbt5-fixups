@@ -46,6 +46,16 @@ SET(BH src/BrokerageHouse)
 SET(CE src/Driver)
 SET(ME src/MarketExchange)
 
+#
+# Set compiler flags.
+set (CMAKE_CXX_FLAGS_DEBUG "-g")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${EGENINC} ${LFS_CFLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_HOME_DIRECTORY}/src/include")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_FORMAT_MACROS")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_CONSTANT_MACROS")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+
+
 FIND_PROGRAM(PG_CONFIG pg_config)
 IF (PG_CONFIG)
     MESSAGE(STATUS "Found pg_config for PostgreSQL: ${PG_CONFIG}")
@@ -209,17 +219,6 @@ target_link_libraries (${DBT5_BROKERAGE_HOUSE} -lpthread ${LIBPQ_LDFLAGS})
 target_link_libraries (${DBT5_DRIVER} -lpthread)
 target_link_libraries (${DBT5_MARKET_EXCHANGE} -lpthread)
 target_link_libraries (${DBT5_TEST_TXN} -lpthread ${LIBPQ_LDFLAGS})
-
-#
-# Set compiler flags.
-#
-
-set (CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${EGENINC} ${LFS_CFLAGS}")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_HOME_DIRECTORY}/src/include")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_FORMAT_MACROS")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_CONSTANT_MACROS")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
 
 set_source_files_properties(
     ${DB_SOURCE}

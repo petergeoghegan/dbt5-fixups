@@ -16,8 +16,7 @@
 # AR=ar
 
 # Platform specific defines
-#CXX=
-CCFLAGS=-g -ggdb -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+CCFLAGS=-std=c++98 -g -ggdb -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
 LDFLAGS=-lpthread
 #AR=
 #ARFLAGS=
