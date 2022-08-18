@@ -456,13 +456,6 @@ echo "Results can be found in: ${OUTPUT_DIR}"
 #
 echo
 echo "1. Starting Brokerage House server"
-rm /tmp/valgrind-BrokerageHouseMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
-         --verbose \
-         --fullpath-after=/home/pg/code/dbt5 \
-         --log-file=/tmp/valgrind-BrokerageHouseMain-out.txt \
 BrokerageHouseMain ${DB_HOSTNAME_ARG} -d ${DB_NAME} ${DB_PORT_ARG} \
 		-o ${BH_OUTPUT_DIR} > ${BH_OUTPUT_DIR}/bh.out 2>&1 &
 
@@ -473,13 +466,6 @@ do_sleep 1
 #
 echo
 echo "2. Starting Market Exchange server"
-rm /tmp/valgrind-MarketExchangeMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
-         --verbose \
-         --fullpath-after=/home/pg/code/dbt5 \
-         --log-file=/tmp/valgrind-MarketExchangeMain-out.txt \
 MarketExchangeMain -c ${CUSTOMERS_INSTANCE} -t ${CUSTOMERS_TOTAL} \
 		-i ${EGENDIR}/flat_in \
 		-o ${MEE_OUTPUT_DIR} > ${MEE_OUTPUT_DIR}/mee.out 2>&1 &
@@ -526,13 +512,6 @@ fi
 echo
 echo "3. Starting Customer driver: ${USERS} user(s)"
 echo "   1 user starting every ${SLEEPY} milliseconds..."
-rm /tmp/valgrind-DriverMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
-         --verbose \
-         --fullpath-after=/home/pg/code/dbt5 \
-         --log-file=/tmp/valgrind-DriverMain-out.txt \
 DriverMain -c ${CUSTOMERS_INSTANCE} -t ${CUSTOMERS_TOTAL} \
 		-f ${SCALE_FACTOR} -w ${ITD} -d ${DURATION} -y ${SLEEPY} \
 		-u ${USERS} -n ${PACING_DELAY} ${SEEDARG} \
