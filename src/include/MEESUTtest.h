@@ -39,6 +39,7 @@ public:
 	// return whether it was successful
 	virtual bool MarketFeed( PMarketFeedTxnInput);
 	
+	CMutex m_AsyncThread;
 	friend void *TradeResultAsync(void *);
 	friend bool RunTradeResultAsync(CMEESUTtest *);
 
