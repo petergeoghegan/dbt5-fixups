@@ -60,6 +60,7 @@ bool RunTradeResultAsync(void *data)
 					data);
 			if (status == 0)
 				break;
+			usleep(1000 * 5) ;
 		}
 
 		if (status != 0) {
@@ -151,6 +152,7 @@ bool RunMarketFeedAsync(void *data)
 					data);
 			if (status == 0)
 				break;
+			usleep(1000 * 5) ;
 			/* if (status != 0) { */
 			/* 	ostringstream osErr; */
 			/* 	osErr << "pthread_create failed: " << status; */
