@@ -270,6 +270,7 @@ public:
         , m_iLoadUnitSize(iLoadUnitSize)
         , m_bCacheEnabled(bCacheEnabled)
         , m_iCacheSizeNA(0)
+        , m_iCacheOffsetNA(0)
     {
         if (m_bCacheEnabled)
         {
