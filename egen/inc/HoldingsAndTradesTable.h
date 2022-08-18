@@ -116,6 +116,8 @@ public:
         , m_bCacheEnabled(bCacheEnabled)
         , m_iCacheSizeNS(0)
         , m_iCacheOffsetNS(0)
+        , m_iCacheOffsetSFFI(0)
+        , m_iCacheSizeSFFI(0)
     {
         m_iSecCount = inputFiles.Securities->GetConfiguredSecurityCount();
 
