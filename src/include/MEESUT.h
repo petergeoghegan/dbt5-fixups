@@ -23,6 +23,7 @@ class CMEESUT : public CMEESUTInterface, public CBaseInterface
 private:
 	TTradeResultTxnInput m_TradeResultTxnInput;
 	TMarketFeedTxnInput m_MarketFeedTxnInput;
+	CMutex m_AsyncThread;
 
 public:
 	CMEESUT(char *addr, const int iListenPort, ofstream *pflog, ofstream *pfmix,
@@ -38,7 +39,6 @@ public:
 	// return whether it was successful
 	virtual bool MarketFeed(PMarketFeedTxnInput);
 
-	CMutex m_AsyncThread;
 	friend void *TradeResultAsync(void *);
 	friend bool RunTradeResultAsync(void *);
 
