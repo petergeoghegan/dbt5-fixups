@@ -269,6 +269,7 @@ public:
         , m_addr(inputFiles, iCustomerCount, iStartFromCustomer, bCacheEnabled)
         , m_iLoadUnitSize(iLoadUnitSize)
         , m_bCacheEnabled(bCacheEnabled)
+        , m_iCacheSizeNA(0)
     {
         if (m_bCacheEnabled)
         {
