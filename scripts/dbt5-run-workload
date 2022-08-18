@@ -457,9 +457,7 @@ echo "Results can be found in: ${OUTPUT_DIR}"
 echo
 echo "1. Starting Brokerage House server"
 rm /tmp/valgrind-BrokerageHouseMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
+valgrind --tool=drd \
          --verbose \
          --fullpath-after=/home/pg/code/dbt5 \
          --log-file=/tmp/valgrind-BrokerageHouseMain-out.txt \
@@ -474,9 +472,7 @@ do_sleep 1
 echo
 echo "2. Starting Market Exchange server"
 rm /tmp/valgrind-MarketExchangeMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
+valgrind --tool=drd \
          --verbose \
          --fullpath-after=/home/pg/code/dbt5 \
          --log-file=/tmp/valgrind-MarketExchangeMain-out.txt \
@@ -527,9 +523,7 @@ echo
 echo "3. Starting Customer driver: ${USERS} user(s)"
 echo "   1 user starting every ${SLEEPY} milliseconds..."
 rm /tmp/valgrind-DriverMain-out.txt
-valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
+valgrind --tool=drd \
          --verbose \
          --fullpath-after=/home/pg/code/dbt5 \
          --log-file=/tmp/valgrind-DriverMain-out.txt \

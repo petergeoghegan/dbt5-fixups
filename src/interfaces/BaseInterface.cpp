@@ -36,14 +36,18 @@ CBaseInterface::~CBaseInterface()
 bool CBaseInterface::biConnect()
 {
 	try {
+		m_pMixLock->lock();
 		sock->dbt5Connect();
+		m_pMixLock->unlock();
 		return true;
 	}
 	catch(std::runtime_error& err) {
+		m_pMixLock->unlock();
 		logErrorMessage(err.what());
 		return false;
 	}
 	catch(CSocketErr *pErr) {
+		m_pMixLock->unlock();
 		ostringstream osErr;
 		osErr << "Error: " << pErr->ErrorText() <<
 				" at CBaseInterface::talkToSUT " << endl;
@@ -56,9 +60,12 @@ bool CBaseInterface::biConnect()
 bool CBaseInterface::biDisconnect()
 {
 	try {
+		m_pMixLock->lock();
 		sock->dbt5Disconnect();
+		m_pMixLock->unlock();
 		return true;
 	} catch(CSocketErr *pErr) {
+		m_pMixLock->unlock();
 		ostringstream osErr;
 		osErr << "Error: " << pErr->ErrorText() <<
 				" at CBaseInterface::talkToSUT " << endl;
