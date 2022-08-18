@@ -35,7 +35,6 @@ private:
 	ofstream m_fLog; // error log file
 	ofstream m_fMix; // mix log file
 
-	static CMutex m_AsyncThread;
 	friend void *marketWorkerThread(void *);
 	// entry point for driver worker thread
 	friend void entryMarketWorkerThread(void *);
