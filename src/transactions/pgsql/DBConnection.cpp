@@ -94,9 +94,6 @@ CDBConnection::CDBConnection(const char *szHost, const char *szDBName,
 {
 	szConnectStr[0] = '\0';
 
-	if (!PQisthreadsafe())
-		throw std::logic_error("libpq is not thread safe");
-
 	// Just pad everything with spaces so we don't have to figure out if it's
 	// needed or not.
 	if (strlen(szHost) > 0) {

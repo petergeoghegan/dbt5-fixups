@@ -780,11 +780,8 @@ void CBrokerageHouse::startListener(void)
 			pThrParam->pBrokerageHouse = this;
 
 			// call entry point
-			m_LogLock.lock();
 			entryWorkerThread(reinterpret_cast<void *>(pThrParam));
-			m_LogLock.unlock();
 		} catch (CSocketErr *pErr) {
-			m_LogLock.unlock();
 			ostringstream osErr;
 			osErr << "Problem accepting socket connection" << endl <<
 					"Error: " << pErr->ErrorText() << " at " <<
