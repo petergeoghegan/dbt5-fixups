@@ -2317,9 +2317,9 @@ void CDBConnection::execute(const TTradeUpdateFrame1Input *pIn,
 		strncpy(pOut->trade_info[i].trade_history_status_id[1],
 				(*p2++).c_str(), cTH_ST_ID_len);
 		pOut->trade_info[i].trade_history_status_id[1][cTH_ST_ID_len] = '\0';
-		strncpy(pOut->trade_info[i].trade_history_status_id[3],
+		strncpy(pOut->trade_info[i].trade_history_status_id[2],
 				(*p2).c_str(), cTH_ST_ID_len);
-		pOut->trade_info[i].trade_history_status_id[3][cTH_ST_ID_len] = '\0';
+		pOut->trade_info[i].trade_history_status_id[2][cTH_ST_ID_len] = '\0';
 		++i;
 	}
 	check_count(pOut->num_found, vAux.size(), __FILE__, __LINE__);
@@ -2540,17 +2540,17 @@ void CDBConnection::execute(const TTradeUpdateFrame2Input *pIn,
 		pOut->trade_info[i].trade_history_status_id[0][cTH_ST_ID_len] = '\0';
 		strncpy(pOut->trade_info[i].trade_history_status_id[1],
 				(*p2++).c_str(), cTH_ST_ID_len);
+
 		pOut->trade_info[i].trade_history_status_id[1][cTH_ST_ID_len] = '\0';
-		strncpy(pOut->trade_info[i].trade_history_status_id[3],
+		strncpy(pOut->trade_info[i].trade_history_status_id[2],
 				(*p2).c_str(), cTH_ST_ID_len);
-		pOut->trade_info[i].trade_history_status_id[3][cTH_ST_ID_len] = '\0';
+		pOut->trade_info[i].trade_history_status_id[2][cTH_ST_ID_len] = '\0';
 		++i;
 	}
 	check_count(pOut->num_found, vAux.size(), __FILE__, __LINE__);
 	vAux.clear();
 
 	TokenizeSmart(PQgetvalue(res, 0, i_trade_list), vAux);
-	this->bh = bh;
 	i = 0;
 	for  (p = vAux.begin(); p != vAux.end(); ++p) {
 		pOut->trade_info[i].trade_id = atol((*p).c_str());
